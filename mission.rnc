@@ -1,0 +1,743 @@
+# This schema is derived from mission-file-docs.txt with heading:
+# MISSION SCRIPT DOCS FOR ARTEMIS SBS V2.0
+# 7/26/2013
+# rev 10
+
+start = element mission_data {
+    attribute version { text }
+    & element start {
+        action+
+    }
+    & event*
+}
+
+# {{{ BEGIN element definitions
+event = element event {
+    # Note that no attributes are documented for the "event" element, but they
+    # are quite common in mission scripts.
+    attribute * { text }*
+
+    & (condition | action)*
+}
+
+# {{{ BEGIN action elements
+action = (
+    create
+    | destroy
+    | destroy_near
+    | add_ai
+    | clear_ai
+    | direct
+    | set_variable
+    | set_timer
+    | incoming_message
+    | big_message
+    | end_mission
+    | incoming_comms_text
+    | log
+    | set_object_property
+    | set_fleet_property
+    | addto_object_property
+    | copy_object_property
+    | set_relative_position
+    | set_to_gm_position
+    | set_skybox_index
+    | warning_popup_message
+    | set_difficulty_level
+    | set_player_grid_damage
+    | play_sound_now
+    | set_damcon_members
+    | set_ship_text
+)
+
+create = (
+    # The command that creates named objects in the game.
+    element create {
+        # TODO: Is this case-sensitive? MISS_AttractMode has "Enemy" as a type.
+        attribute type {
+            "anomaly"
+            |"blackHole"
+            |"enemy"
+            |"genericMesh"
+            |"monster"
+            |"neutral"
+            |"player"
+            |"station"
+            |"whale"
+        }
+
+        & (position | use_gm_position)
+
+        & name_attribute?
+        & attribute hulltype { type_integer_expression | xsd:integer { minInclusive="0" } }?
+        & attribute raceKeys { text }?
+        & attribute hullKeys { text }?
+        & attribute angle { type_angle_degrees }?
+        # TODO: Have seen -1 as a value for this, not sure what it means.
+        & attribute fleetnumber { type_integer_expression | type_fleet_number | "-1" }?
+        & attribute sideValue { type_integer_expression | xsd:integer { minInclusive="0" maxInclusive="31" } }?
+
+        # For genericMesh
+        & attribute meshFileName { text }?
+        & attribute textureFileName { text }?
+        & attribute hullRace { text }?
+
+        & attribute fakeShieldsFront { type_integer_expression | xsd:integer { minInclusive="1" maxInclusive="1000" } }?
+        & attribute fakeShieldsRear { type_integer_expression | xsd:integer { minInclusive="1" maxInclusive="1000" } }?
+
+        & attribute hasFakeShldFreq { type_integer_expression | xsd:integer { minInclusive="0" maxInclusive="1" } }?
+
+        & attribute ColorRed { type_float_zero_to_one }?
+        & attribute ColorGreen { type_float_zero_to_one }?
+        & attribute ColorBlue { type_float_zero_to_one }?
+
+        # For whales
+        & attribute podnumber { type_integer_expression | xsd:integer { minInclusive="0" maxInclusive="9" } }?
+    }
+
+    # The command that creates UNnamed objects in the game.
+    | element create {
+        unnamedType
+        & attribute count { type_integer_expression | xsd:integer { minInclusive="0" maxInclusive="500" } }
+        & attribute randomRange { type_xz_value }?
+        & attribute randomSeed { type_integer_expression | xsd:integer { minInclusive="0" } }?
+        # Either:
+        & (
+            # * Rectangular region.
+            (
+                # TODO: Should this include use_gm_position?
+                ((startPosition | use_gm_position) & endPosition)
+            )
+            # * Circular (spherical?) region.
+            | (
+                (startPosition | use_gm_position)
+                & attribute radius { type_xz_value }
+                & (
+                    attribute startAngle { type_angle_degrees }
+                    & attribute endAngle { type_angle_degrees }
+                )?
+            )
+        )
+    }
+)
+
+## The command that removes something named from the game.
+destroy = element destroy {
+    name_attribute
+    | use_gm_selection
+}
+
+## The command that removes unnamed objects from the game, if near a point.
+destroy_near = element destroy_near {
+    unnamedType
+    & (
+        centerPosition
+        | use_gm_position
+        # Destroy objects near named object.
+        | name_attribute
+    )
+    & attribute radius { type_xz_value }
+}
+
+## The command that adds an AI decision to a neutral or enemy's brain stack.
+add_ai = element add_ai {
+    (name_attribute | use_gm_selection)
+    # targetName only meaningful for "ATTACK" and "TARGET_THROTTLE"
+    & attribute targetName { text }?
+    & attribute type { type_ai }
+    # The following only valid depending on AI type:
+    & attribute value1 { type_integer_expression | type_xz_value }?
+    & attribute value2 { type_integer_expression | type_xz_value }?
+    & attribute value3 { type_integer_expression | type_xz_value }?
+    & attribute value4 { type_integer_expression | type_xz_value }?
+}
+
+## Remove all AI decision blocks from neutral or enemy brain stack.
+clear_ai = element clear_ai {
+    (name_attribute | use_gm_selection)
+}
+
+## Tell neutral or enemy to do something.
+direct = element direct {
+    # The name of the object to give the direction order to.
+    name_attribute
+    & (
+        # Go fight the named target.
+        attribute targetName { text }
+        # Go to position.
+        | point
+    )
+    # scriptThrottle is absolute for generics
+    & attribute scriptThrottle { type_float_expression | type_float_zero_to_one }?
+}
+
+## Makes or sets a named value.
+set_variable = element set_variable {
+    name_attribute
+    # The value to set:
+    & (
+        # TODO: Docs say minimum of 0, is this true?
+        # TODO: Can this be an integer? Is there any distinction? (i.e are variables typed?)
+        attribute value { type_integer_expression | type_float_expression }
+        | (
+            attribute randomIntHigh { type_integer_expression }
+            & attribute randomIntLow { type_integer_expression }
+        )
+        | (
+            attribute randomFloatHigh { type_float_expression }
+            & attribute randomFloatLow { type_float_expression }
+        )
+    )
+}
+
+## Makes or sets a named timer.
+set_timer = element set_timer {
+    name_attribute
+    & attribute seconds { type_integer_expression | xsd:integer { minInclusive="0" } }
+}
+
+## Creates a Comms button to play a media file on the main screen.
+incoming_message = element incoming_message {
+    attribute from { text }
+    # fileName refers to the a file within the mission subdirectory, next to the script XML file.
+    & attribute fileName { text }
+    # 0 means OGG audio files.
+    & attribute mediaType { "0" }
+}
+
+## Creates a chapter title on the main screen.
+big_message = element big_message {
+    attribute title { text }
+    & attribute subtitle1 { text }?
+    & attribute subtitle2 { text }?
+}
+
+## Stops the mission.
+end_mission = element end_mission { empty }
+
+## Sends a block of text to the Comms station.
+incoming_comms_text = element incoming_comms_text {
+    attribute from { text }
+    & text
+}
+
+## Sends text to the mission's log file.
+log = element log {
+    attribute text { text }
+}
+
+## Sets a named space object's property to a value.
+set_object_property = element set_object_property {
+    name_attribute
+    & attribute property { type_property }
+    & attribute value { type_float_expression }
+}
+
+## Sets a numbered enemy fleet's named property to a value.
+set_fleet_property = element set_fleet_property {
+    attribute fleetIndex { type_fleet_number }
+    & attribute property { "fleetSpacing" | "fleetMaxRadius" }
+    # fleetSpacing is normally 150-600
+    # fleetMaxRadius is normally 1000
+    & attribute value { type_float_expression }
+}
+
+## Adds a value to a named space object's named property.
+addto_object_property = element addto_object_property {
+    name_attribute
+    & attribute property { type_property }
+    & attribute value { type_float_expression }
+}
+
+## Copies a named property from one named space object to another, name1 to
+## name2.
+copy_object_property = element copy_object_property {
+    attribute name1 { text }
+    & attribute name2 { text }
+    & attribute property { type_property }
+}
+
+## Moves one named space object (name2) to a point near another (name1),
+## relative to name1's heading.
+set_relative_position = element set_relative_position {
+    attribute name1 { text }
+    & attribute name2 { text }
+    & attribute angle { type_angle_degrees }
+    & attribute distance { type_xz_value }
+}
+
+## Moves one named space object (name) to the point specified by clicking on
+## the game master console screen.
+set_to_gm_position = element set_to_gm_position {
+    (name_attribute | use_gm_selection)
+    & attribute angle { type_angle_degrees }?
+    & attribute distance { type_xz_value }?
+}
+
+## Sets the skybox of the main screen to 0-9.
+set_skybox_index = element set_skybox_index {
+    attribute index { xsd:integer { minInclusive="0" maxInclusive="9" } }
+}
+
+## Sends a very short message to screens specified.
+warning_popup_message = element warning_popup_message {
+    attribute message { text }
+    & attribute consoles { type_console_set }
+}
+
+## Overrides the difficulty level set on the server control screen.
+set_difficulty_level = element set_difficulty_level {
+    # TODO: Documentation state a max of 10, shouldn't this be 11?
+    attribute value { xsd:integer { minInclusive="1" maxInclusive="10" } }
+}
+
+## Changes the damage value of a ship system in the 3D grid.
+set_player_grid_damage = element set_player_grid_damage {
+    # TODO: How does this work with multiple player ships?
+    attribute systemType { type_system_type_name }
+    # 0.0 is no damage, 1.0 is full damage.
+    & attribute value { type_float_zero_to_one }
+    & attribute countFrom { "left"|"top"|"front" }
+    # You can't damage more systems than the ship has.
+    & attribute index { xsd:integer { minInclusive="0" maxInclusive="100" } }
+}
+
+play_sound_now = element play_sound_now {
+    # Name of a WAV file in mission directoy.
+    attribute filename { text }
+}
+
+## Changes the count of team members in a specific damcon team.
+set_damcon_members = element set_damcon_members {
+    # TODO: How does this work with multiple player ships?
+    team_index
+    & attribute value { xsd:integer { minInclusive="0" maxInclusive="6" } }
+}
+
+set_ship_text = element set_ship_text {
+    # Current name of existing neutral or enemy.
+    name_attribute
+
+    # If you don't include the following attributes, those attributes will not
+    # be changed.
+
+    # Name to change to.
+    & attribute newname { text }?
+    # Text of race.
+    & attribute race { text }?
+    # Text of class.
+    & attribute class { text }?
+    # Description the science console sees after one scan.
+    & attribute desc { text }?
+    # Description the science console sees after two scans.
+    & attribute scan_desc { text }?
+}
+
+## Sets a client console to key-active; it sends key press messages to the server.
+start_getting_keypresses_from = element start_getting_keypresses_from {
+    # A collection of the letters MHWESCO, defining which console(s) we want.
+    attribute consoles { type_console_set }
+}
+
+## Sets a client console to NOT key-active.
+end_getting_keypresses_from = element end_getting_keypresses_from {
+    # A collection of the letters MHWESCO, defining which console(s) we want.
+    attribute consoles { type_console_set }
+}
+
+## Changes the "specialCaptainType" and "specialShipType" variables of an
+## AIShip, and rebuilds the scan text for the ship.
+set_special = element set_special {
+    # Name of existing NPC ship
+    name_attribute
+
+    # If you don't include the following attributes, those attributes will not
+    # be changed.
+
+    # 0=dilapidated
+    # 1=upgraded
+    # 2=overpowered
+    # 3=underpowered
+    & attribute ship { xsd:integer { minInclusive="0" maxInclusive="3" } }?
+
+    # 0=cowardly
+    # 1=brave
+    # 2=bombastic
+    # 3=seething
+    # 4=duplicitous
+    # 5=exceptional
+    & attribute captain { xsd:integer { minInclusive="0" maxInclusive="5" } }?
+}
+# }}} END action elements
+
+# {{{ BEGIN condition elements
+condition = (
+    if_inside_box
+    | if_outside_box
+    | if_inside_sphere
+    | if_outside_sphere
+    | if_distance
+    | if_variable
+    | if_damcon_members
+    | if_fleet_count
+    | if_difficulty
+    | if_docked
+    | if_player_is_targeting
+    | if_timer_finished
+    | if_exists
+    | if_not_exists
+    | if_object_property
+    | if_gm_key
+    | if_client_key
+)
+
+## Tests if named object is inside a rectangle in space.
+if_inside_box = element if_inside_box {
+    name_attribute
+    & attribute leastX { type_xz_value }
+    & attribute leastZ { type_xz_value }
+    & attribute mostX { type_xz_value }
+    & attribute mostZ { type_xz_value }
+}
+
+## Tests if named object is outside a rectangle in space.
+if_outside_box = element if_outside_box {
+    name_attribute
+    & attribute leastX { type_xz_value }
+    & attribute leastZ { type_xz_value }
+    & attribute mostX { type_xz_value }
+    & attribute mostZ { type_xz_value }
+}
+
+## Tests if named object is inside a sphere in space.
+if_inside_sphere = element if_inside_sphere {
+    name_attribute
+    & attribute centerX { type_xz_value }
+    & attribute centerY { type_y_value }
+    & attribute centerZ { type_xz_value }
+    & attribute radius { type_xz_value }
+}
+
+## Tests if named object is outside a sphere in space.
+if_outside_sphere = element if_outside_sphere {
+    name_attribute
+    & attribute centerX { type_xz_value }
+    & attribute centerY { type_y_value }
+    & attribute centerZ { type_xz_value }
+    & attribute radius { type_xz_value }
+}
+
+## Tests the distance between two named objects against a condition.
+if_distance = element if_distance {
+    attribute name1 { text }
+    & attribute name2 { text }
+
+    # TODO: The documentation mentions "pointX" and friends, but doesn't make
+    # it clear what they are for.
+    & point?
+
+    & comparator
+    & attribute value { type_float_expression }
+}
+
+## Tests a named variable against a condition.
+if_variable = element if_variable {
+    name_attribute
+    & comparator
+    & attribute value { type_float_expression }
+}
+
+## Tests the count of team members in a specific damcon team against a condition.
+if_damcon_members = element if_damcon_members {
+    team_index
+    & comparator
+    & attribute value { type_float_expression }
+}
+
+## Tests an indexed fleet's membership count against a condition.
+if_fleet_count = element if_fleet_count {
+    # TODO: Documentation lists the "name" attribute, but it's not clear what
+    # it's for. It seems to be unused by missions.
+    name_attribute?
+    & comparator
+    & attribute value { type_float_expression }
+    # If you omit the fleetnumber, this command will count every enemy in the game.
+    & attribute fleetnumber { type_fleet_number }?
+}
+
+## Tests the current game's difficulty level against a condition.
+if_difficulty = element if_difficulty {
+    comparator
+    & attribute value { type_float_expression }
+}
+
+## Tests if a player is docked with a named station.
+if_docked = element if_docked { name_attribute }
+
+## Tests if the Artemis's weapons officer has a lock on the named object.
+if_player_is_targeting = element if_player_is_targeting { name_attribute }
+
+## Tests if a timer has counted down to zero yet.
+if_timer_finished = element if_timer_finished { name_attribute }
+
+## Tests if named object exists right now.
+if_exists = element if_exists { name_attribute }
+
+## Tests if named object does NOT exist right now.
+if_not_exists = element if_not_exists { name_attribute }
+
+## Tests a named space object's named property against a condition.
+if_object_property = element if_object_property {
+    name_attribute
+    # TODO: original document lists "property" as "name", assuming a mistake.
+    & attribute property { type_property }
+    & comparator
+    & attribute value { type_float_expression }
+}
+
+## Triggers when a key is pressed on a game master console.
+if_gm_key = element if_gm_key { keyText | keyValue }
+
+## Triggers when a key is pressed on a key-activated console.
+## NOTE: use start_getting_keypresses_from and end_getting_keypresses_from to
+## key-activate a console.
+if_client_key = element if_client_key { keyText | keyValue }
+
+# }}} END condition elements
+
+# }}} END element definitions
+###############################################################################
+# {{{ BEGIN common attribute definitions
+
+name_attribute = attribute name { text }
+
+unnamedType = attribute type { "nebulas" | "asteroids" | "mines" }
+
+use_gm_selection = attribute use_gm_selection { type_ignored }
+
+use_gm_position = attribute use_gm_position { type_ignored }
+
+position = (
+    attribute x { type_xz_value }
+    & attribute y { type_y_value }
+    & attribute z { type_xz_value }
+)
+
+point = (
+    attribute pointX { type_xz_value }
+    & attribute pointY { type_y_value }
+    & attribute pointZ { type_xz_value }
+)
+
+centerPosition = (
+    attribute centerX { type_xz_value }
+    & attribute centerY { type_y_value }
+    & attribute centerZ { type_xz_value }
+)
+
+startPosition = (
+    attribute startX { type_xz_value }
+    & attribute startY { type_y_value }
+    & attribute startZ { type_xz_value }
+)
+
+endPosition = (
+    attribute endX { type_xz_value }
+    & attribute endY { type_y_value }
+    & attribute endZ { type_xz_value }
+)
+
+## Damcon team index.
+team_index = attribute team_index { xsd:integer { minInclusive="0" maxInclusive="2" } }
+
+## Comparison operator to use in condition.
+comparator = attribute comparator { type_comparator_operator }
+
+## Single letter (usually upper case).
+## TODO: Can this include other characters?
+## TODO: Assuming that case doesn't matter, although the implication is that
+## upper-case is the suggested style.
+## TODO: Documentation only mentions letters, but digits and space have been
+## seen also.
+keyText = attribute keyText { xsd:string { pattern="[A-Za-z0-9 ]" } }
+## Raw key scan code (note that attribute name is "value", not "keyValue").
+keyValue = attribute value { xsd:integer { minInclusive="0" maxInclusive="128" } }
+
+# }}} END common attribute definitions
+###############################################################################
+# {{{ BEGIN common type definitions
+type_fleet_number = xsd:integer { minInclusive="0" maxInclusive="99" }
+
+type_xz_value = type_integer_expression | xsd:integer { minInclusive="0" maxInclusive="100000" }
+type_y_value = type_integer_expression | xsd:integer { minInclusive="-100000" maxInclusive="100000" }
+# TODO: Documentation doesn't state if degrees are integer or float. Have seen
+# float value in MISS_AttractMode.
+type_angle_degrees = xsd:float { minInclusive="0.0" maxInclusive="360.0" }
+type_float_zero_to_one = type_float_expression | xsd:float { minInclusive="0.0" maxInclusive="1.0" }
+
+type_system_type_name = (
+    "systemBeam"
+    | "systemTorpedo"
+    | "systemTactical"
+    | "systemTurning"
+    | "systemImpulse"
+    | "systemWarp"
+    | "systemFrontShield"
+    | "systemBackShield"
+)
+
+## Specifies one or more consoles.
+type_console_set = xsd:string { pattern="[MHWESCO]+" }
+
+## Upper and lower case versions of the textual operators seem to be used in
+## existing mission scripts, assuming that this is okay.
+type_comparator_operator = (
+    "=" | "!=" | "<" | ">" | "<=" | ">="
+    | "EQUALS" | "NOT" | "GREATER" | "LESS" | "GREATER_EQUAL" | "LESS_EQUAL"
+    | "equals" | "not" | "greater" | "less" | "greater_equal" | "less_equal"
+)
+
+type_ai = (
+    "TRY_TO_BECOME_LEADER"
+    | "CHASE_PLAYER"
+    | "CHASE_NEUTRAL"
+    | "CHASE_ENEMY"
+    | "CHASE_STATION"
+    | "CHASE_WHALE"
+    | "AVOID_WHALE"
+    | "AVOID_BLACK_HOLE"
+    | "CHASE_ANGER"
+    | "CHASE_FLEET"
+    | "FOLLOW_LEADER"
+    | "FOLLOW_COMMS_ORDERS"
+    | "LEADER_LEADS"
+    | "ELITE_AI"
+    | "DIR_THROTTLE"
+    | "POINT_THROTTLE"
+    | "TARGET_THROTTLE"
+    | "ATTACK"
+    | "DEFEND"
+    | "PROCEED_TO_EXIT"
+    | "FIGHTER_BINGO"
+    | "LAUNCH_FIGHTERS"
+)
+
+## Properties you can set, add, or test against. angle, pitch, roll are in
+## radians (0-2*PI), NOT degrees like every other angle in the scripting parser.
+## TODO: Is this case-sensitive? MISS_AttractMode has lower-case values from
+## this.
+type_property = (
+    # Values for everything:
+    "positionX"
+    | "positionY"
+    | "positionZ"
+    | "deltaX"
+    | "deltaY"
+    | "deltaZ"
+    | "angle"
+    | "pitch"
+    | "roll"
+
+    # Values for GenericMesh:
+    | "blocksShotFlag"
+    | "pushRadius"
+    | "pitchDelta"
+    | "rollDelta"
+    | "angleDelta"
+    | "artScale"
+
+    # Values for stations:
+    | "shieldState"
+    | "canBuild"
+    | "missileStoresHoming"
+    | "missileStoresNuke"
+    | "missileStoresMine"
+    | "missileStoresECM"
+
+    # Values for shielded ships:
+    | "throttle"
+    | "steering"
+    | "topSpeed"
+    | "turnRate"
+    | "shieldStateFront"
+    | "shieldMaxStateFront"
+    | "shieldStateBack"
+    | "shieldMaxStateBack"
+    | "shieldsOn"
+    | "triggersMines"
+    | "systemDamageBeam"
+    | "systemDamageTorpedo"
+    | "systemDamageTactical"
+    | "systemDamageTurning"
+    | "systemDamageImpulse"
+    | "systemDamageWarp"
+    | "systemDamageFrontShield"
+    | "systemDamageBackShield"
+    | "shieldBandStrength0"
+    | "shieldBandStrength1"
+    | "shieldBandStrength2"
+    | "shieldBandStrength3"
+    | "shieldBandStrength4"
+
+    # Values for enemies:
+    | "targetPointX"
+    | "targetPointY"
+    | "targetPointZ"
+    | "hasSurrendered"
+    # eliteAIType is any of the following values:
+    # 0 = Behave just like a normal ship (hunt stations, unless a neutral or
+    #     player is close).
+    # 1 = Follow the nearest normal fleet around, attack the player when close.
+    # 2 = Ignore everything except players.
+    | "eliteAIType"
+    # eliteAbilityBits is a bitfield of the following values:
+    # ELITE_INVIS_TO_MAIN_SCREEN = 1
+    # ELITE_INVIS_TO_SCIENCE = 2
+    # ELITE_INVIS_TO_TACTICAL = 4
+    # ELITE_CLOAKING = 8
+    # ELITE_HET = 16
+    # ELITE_WARP = 32
+    # ELITE_TELEPORT = 64
+    # Take the sum of the number for each ability above, and that's the number
+    # for that combination of values.
+    | "eliteAbilityBits"
+    | "eliteAbilityState"
+    | "surrenderChance (0-100)"
+
+    # Values for neutrals:
+    | "exitPointX"
+    | "exitPointY"
+    | "exitPointZ"
+
+    # TODO: This value has been seen in MISS_TheWaningDark, assuming it's for neutrals:
+    | "willAcceptCommsOrders"
+
+    # Values for players:
+    | "countHoming"
+    | "countNuke"
+    | "countMine"
+    | "countECM"
+    | "energy"
+    | "warpState"
+    # Note: currentRealSpeed is read only.
+    | "currentRealSpeed"
+    | "totalCoolant"
+)
+
+## From mission-file-docs.txt:
+## Starting with Version 1.69, literal number values have been replaced by an
+## expression evaluator.  Put simply, anywhere you can type in a number, you can
+## also type in a math expression (like 5 * 2 / 6.554). Most importantly, you
+## can use variable names in the expressions, too.
+##
+## Note: this regular expression doesn't even attempt to check if an expression
+## is valid - that's not possible. It merely looks for a reasonable set of
+## characters in the value
+type_numeric_expression = xsd:string { pattern="[\-.A-Za-z_ 0-9+*/()]+" }
+type_float_expression = type_numeric_expression | xsd:float
+type_integer_expression = type_numeric_expression | xsd:integer
+
+## type_ignored means that the value specified has no effect. Used in cases
+## where only the presence of an attribute is important.
+type_ignored = text
+# }}} END common type definitions
