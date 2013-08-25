@@ -2,20 +2,35 @@
 # MISSION SCRIPT DOCS FOR ARTEMIS SBS V2.0
 # 7/26/2013
 # rev 10
+#
+# TODO: Determine:
+# * Are attribute names case-insensitive in Artemis? (some mission scripts seem to think they are)
+# * Are property names case-insensitive in Artemis? (some mission scripts seem to think they are)
+# * Can angles (startAngle, endAngle) be -ve? MISS_Sandbox uses -ve values.
 
 start = element mission_data {
     attribute version { text }
+    # non-standard: background_id_arme
+    & attribute background_id_arme { type_uuid | empty }?
     & element start {
-        action+
+        # non-standard: name_arme
+        attribute name_arme { text }?
+        & action+
     }
-    & event*
+    & (
+        event
+        # non-standard: tool_elements
+        | tool_elements
+    )*
 }
 
 # {{{ BEGIN element definitions
 event = element event {
     # Note that no attributes are documented for the "event" element, but they
     # are quite common in mission scripts.
-    attribute * { text }*
+    tool_attributes?
+    # Name attribute has been seen on events in MISS_TheWaningDark.
+    & attribute name { text }?
 
     & (condition | action)*
 }
@@ -48,6 +63,9 @@ action = (
     | play_sound_now
     | set_damcon_members
     | set_ship_text
+    | start_getting_keypresses_from
+    | end_getting_keypresses_from
+    | set_special
 )
 
 create = (
@@ -70,10 +88,14 @@ create = (
 
         & attr_name?
         & attribute hulltype { type_integer_expression | xsd:integer { minInclusive="0" } }?
-        & attribute raceKeys { text }?
-        & attribute hullKeys { text }?
+        & (
+            # New, more flexible and recommended way:
+            (attribute raceKeys { text }? & attribute hullKeys { text }?)
+            # Old way, still active, not recommended:
+            | attribute hullID { xsd:integer { minInclusive="0" } }
+        )
         & attribute angle { type_angle_degrees }?
-        # TODO: Have seen -1 as a value for this, not sure what it means.
+        # TODO: Have seen -1 as a value for this, not sure what it means. (do not assign to fleet?)
         & attribute fleetnumber { type_integer_expression | type_fleet_number | "-1" }?
         & attribute sideValue { type_integer_expression | xsd:integer { minInclusive="0" maxInclusive="31" } }?
 
@@ -207,7 +229,7 @@ incoming_message = element incoming_message {
 
 ## Creates a chapter title on the main screen.
 big_message = element big_message {
-    attribute title { text }
+    attribute title { text }?
     & attribute subtitle1 { text }?
     & attribute subtitle2 { text }?
 }
@@ -280,6 +302,7 @@ set_skybox_index = element set_skybox_index {
 }
 
 ## Sends a very short message to screens specified.
+## TODO: MISS_Mystery at Oceanus puts text in the body of this element, is that valid?
 warning_popup_message = element warning_popup_message {
     attribute message { text }
     & attribute consoles { type_console_set }
@@ -557,9 +580,9 @@ attr_comparator = attribute comparator { type_comparator_operator }
 ## TODO: Can this include other characters?
 ## TODO: Assuming that case doesn't matter, although the implication is that
 ## upper-case is the suggested style.
-## TODO: Documentation only mentions letters, but digits and space have been
+## TODO: Documentation only mentions letters, but other characters have been
 ## seen also.
-attr_keyText = attribute keyText { xsd:string { pattern="[A-Za-z0-9 ]" } }
+attr_keyText = attribute keyText { xsd:string { pattern="." } }
 ## Raw key scan code (note that attribute name is "value", not "attr_value").
 attr_value = attribute value { xsd:integer { minInclusive="0" maxInclusive="128" } }
 
@@ -709,9 +732,6 @@ type_property = (
     | "exitPointY"
     | "exitPointZ"
 
-    # TODO: This value has been seen in MISS_TheWaningDark, assuming it's for neutrals:
-    | "willAcceptCommsOrders"
-
     # Values for players:
     | "countHoming"
     | "countNuke"
@@ -722,6 +742,11 @@ type_property = (
     # Note: currentRealSpeed is read only.
     | "currentRealSpeed"
     | "totalCoolant"
+
+    # TODO: This value has been seen in MISS_TheWaningDark, assuming it's for neutrals:
+    | "willAcceptCommsOrders"
+    # TODO: This value seen in MISS_Sandbox, assuming it's for enemies:
+    | "surrenderChance"
 )
 
 ## From mission-file-docs.txt:
@@ -740,4 +765,22 @@ type_integer_expression = type_numeric_expression | xsd:integer
 ## type_ignored means that the value specified has no effect. Used in cases
 ## where only the presence of an attribute is important.
 type_ignored = text
+
+type_uuid = xsd:string { pattern="[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}" }
 # }}} END common type definitions
+
+# {{{ BEGIN non-standard things from scripting tools
+# This section contains non-standard elements from mission scripting tools.
+
+tool_elements = (
+    element folder_arme { tool_attributes }
+)
+
+tool_attributes = (
+    attribute name_arme { text }?
+    & attribute id_arme { type_uuid }
+    & attribute parent_id_arme { type_uuid }?
+    & attribute expanded_arme { empty }?
+)
+
+# }}} END non-standard things from scripting tools
