@@ -66,9 +66,9 @@ create = (
             |"whale"
         }
 
-        & (position | use_gm_position)
+        & (attr_position | attr_use_gm_position)
 
-        & name_attribute?
+        & attr_name?
         & attribute hulltype { type_integer_expression | xsd:integer { minInclusive="0" } }?
         & attribute raceKeys { text }?
         & attribute hullKeys { text }?
@@ -97,7 +97,7 @@ create = (
 
     # The command that creates UNnamed objects in the game.
     | element create {
-        unnamedType
+        attr_type_unnamed
         & attribute count { type_integer_expression | xsd:integer { minInclusive="0" maxInclusive="500" } }
         & attribute randomRange { type_xz_value }?
         & attribute randomSeed { type_integer_expression | xsd:integer { minInclusive="0" } }?
@@ -105,12 +105,12 @@ create = (
         & (
             # * Rectangular region.
             (
-                # TODO: Should this include use_gm_position?
-                ((startPosition | use_gm_position) & endPosition)
+                # TODO: Should this include attr_use_gm_position?
+                ((attr_start | attr_use_gm_position) & attr_end)
             )
             # * Circular (spherical?) region.
             | (
-                (startPosition | use_gm_position)
+                (attr_start | attr_use_gm_position)
                 & attribute radius { type_xz_value }
                 & (
                     attribute startAngle { type_angle_degrees }
@@ -123,25 +123,25 @@ create = (
 
 ## The command that removes something named from the game.
 destroy = element destroy {
-    name_attribute
-    | use_gm_selection
+    attr_name
+    | attr_use_gm_selection
 }
 
 ## The command that removes unnamed objects from the game, if near a point.
 destroy_near = element destroy_near {
-    unnamedType
+    attr_type_unnamed
     & (
-        centerPosition
-        | use_gm_position
+        attr_center
+        | attr_use_gm_position
         # Destroy objects near named object.
-        | name_attribute
+        | attr_name
     )
     & attribute radius { type_xz_value }
 }
 
 ## The command that adds an AI decision to a neutral or enemy's brain stack.
 add_ai = element add_ai {
-    (name_attribute | use_gm_selection)
+    (attr_name | attr_use_gm_selection)
     # targetName only meaningful for "ATTACK" and "TARGET_THROTTLE"
     & attribute targetName { text }?
     & attribute type { type_ai }
@@ -154,18 +154,18 @@ add_ai = element add_ai {
 
 ## Remove all AI decision blocks from neutral or enemy brain stack.
 clear_ai = element clear_ai {
-    (name_attribute | use_gm_selection)
+    (attr_name | attr_use_gm_selection)
 }
 
 ## Tell neutral or enemy to do something.
 direct = element direct {
     # The name of the object to give the direction order to.
-    name_attribute
+    attr_name
     & (
         # Go fight the named target.
         attribute targetName { text }
         # Go to position.
-        | point
+        | attr_point
     )
     # scriptThrottle is absolute for generics
     & attribute scriptThrottle { type_float_expression | type_float_zero_to_one }?
@@ -173,7 +173,7 @@ direct = element direct {
 
 ## Makes or sets a named value.
 set_variable = element set_variable {
-    name_attribute
+    attr_name
     # The value to set:
     & (
         # TODO: Docs say minimum of 0, is this true?
@@ -192,7 +192,7 @@ set_variable = element set_variable {
 
 ## Makes or sets a named timer.
 set_timer = element set_timer {
-    name_attribute
+    attr_name
     & attribute seconds { type_integer_expression | xsd:integer { minInclusive="0" } }
 }
 
@@ -228,7 +228,7 @@ log = element log {
 
 ## Sets a named space object's property to a value.
 set_object_property = element set_object_property {
-    name_attribute
+    attr_name
     & attribute property { type_property }
     & attribute value { type_float_expression }
 }
@@ -244,7 +244,7 @@ set_fleet_property = element set_fleet_property {
 
 ## Adds a value to a named space object's named property.
 addto_object_property = element addto_object_property {
-    name_attribute
+    attr_name
     & attribute property { type_property }
     & attribute value { type_float_expression }
 }
@@ -257,7 +257,7 @@ copy_object_property = element copy_object_property {
     & attribute property { type_property }
 }
 
-## Moves one named space object (name2) to a point near another (name1),
+## Moves one named space object (name2) to a attr_point near another (name1),
 ## relative to name1's heading.
 set_relative_position = element set_relative_position {
     attribute name1 { text }
@@ -266,10 +266,10 @@ set_relative_position = element set_relative_position {
     & attribute distance { type_xz_value }
 }
 
-## Moves one named space object (name) to the point specified by clicking on
+## Moves one named space object (name) to the attr_point specified by clicking on
 ## the game master console screen.
 set_to_gm_position = element set_to_gm_position {
-    (name_attribute | use_gm_selection)
+    (attr_name | attr_use_gm_selection)
     & attribute angle { type_angle_degrees }?
     & attribute distance { type_xz_value }?
 }
@@ -310,13 +310,13 @@ play_sound_now = element play_sound_now {
 ## Changes the count of team members in a specific damcon team.
 set_damcon_members = element set_damcon_members {
     # TODO: How does this work with multiple player ships?
-    team_index
+    attr_team_index
     & attribute value { xsd:integer { minInclusive="0" maxInclusive="6" } }
 }
 
 set_ship_text = element set_ship_text {
     # Current name of existing neutral or enemy.
-    name_attribute
+    attr_name
 
     # If you don't include the following attributes, those attributes will not
     # be changed.
@@ -349,7 +349,7 @@ end_getting_keypresses_from = element end_getting_keypresses_from {
 ## AIShip, and rebuilds the scan text for the ship.
 set_special = element set_special {
     # Name of existing NPC ship
-    name_attribute
+    attr_name
 
     # If you don't include the following attributes, those attributes will not
     # be changed.
@@ -393,7 +393,7 @@ condition = (
 
 ## Tests if named object is inside a rectangle in space.
 if_inside_box = element if_inside_box {
-    name_attribute
+    attr_name
     & attribute leastX { type_xz_value }
     & attribute leastZ { type_xz_value }
     & attribute mostX { type_xz_value }
@@ -402,7 +402,7 @@ if_inside_box = element if_inside_box {
 
 ## Tests if named object is outside a rectangle in space.
 if_outside_box = element if_outside_box {
-    name_attribute
+    attr_name
     & attribute leastX { type_xz_value }
     & attribute leastZ { type_xz_value }
     & attribute mostX { type_xz_value }
@@ -411,7 +411,7 @@ if_outside_box = element if_outside_box {
 
 ## Tests if named object is inside a sphere in space.
 if_inside_sphere = element if_inside_sphere {
-    name_attribute
+    attr_name
     & attribute centerX { type_xz_value }
     & attribute centerY { type_y_value }
     & attribute centerZ { type_xz_value }
@@ -420,7 +420,7 @@ if_inside_sphere = element if_inside_sphere {
 
 ## Tests if named object is outside a sphere in space.
 if_outside_sphere = element if_outside_sphere {
-    name_attribute
+    attr_name
     & attribute centerX { type_xz_value }
     & attribute centerY { type_y_value }
     & attribute centerZ { type_xz_value }
@@ -434,23 +434,23 @@ if_distance = element if_distance {
 
     # TODO: The documentation mentions "pointX" and friends, but doesn't make
     # it clear what they are for.
-    & point?
+    & attr_point?
 
-    & comparator
+    & attr_comparator
     & attribute value { type_float_expression }
 }
 
 ## Tests a named variable against a condition.
 if_variable = element if_variable {
-    name_attribute
-    & comparator
+    attr_name
+    & attr_comparator
     & attribute value { type_float_expression }
 }
 
 ## Tests the count of team members in a specific damcon team against a condition.
 if_damcon_members = element if_damcon_members {
-    team_index
-    & comparator
+    attr_team_index
+    & attr_comparator
     & attribute value { type_float_expression }
 }
 
@@ -458,8 +458,8 @@ if_damcon_members = element if_damcon_members {
 if_fleet_count = element if_fleet_count {
     # TODO: Documentation lists the "name" attribute, but it's not clear what
     # it's for. It seems to be unused by missions.
-    name_attribute?
-    & comparator
+    attr_name?
+    & attr_comparator
     & attribute value { type_float_expression }
     # If you omit the fleetnumber, this command will count every enemy in the game.
     & attribute fleetnumber { type_fleet_number }?
@@ -467,41 +467,41 @@ if_fleet_count = element if_fleet_count {
 
 ## Tests the current game's difficulty level against a condition.
 if_difficulty = element if_difficulty {
-    comparator
+    attr_comparator
     & attribute value { type_float_expression }
 }
 
 ## Tests if a player is docked with a named station.
-if_docked = element if_docked { name_attribute }
+if_docked = element if_docked { attr_name }
 
 ## Tests if the Artemis's weapons officer has a lock on the named object.
-if_player_is_targeting = element if_player_is_targeting { name_attribute }
+if_player_is_targeting = element if_player_is_targeting { attr_name }
 
 ## Tests if a timer has counted down to zero yet.
-if_timer_finished = element if_timer_finished { name_attribute }
+if_timer_finished = element if_timer_finished { attr_name }
 
 ## Tests if named object exists right now.
-if_exists = element if_exists { name_attribute }
+if_exists = element if_exists { attr_name }
 
 ## Tests if named object does NOT exist right now.
-if_not_exists = element if_not_exists { name_attribute }
+if_not_exists = element if_not_exists { attr_name }
 
 ## Tests a named space object's named property against a condition.
 if_object_property = element if_object_property {
-    name_attribute
+    attr_name
     # TODO: original document lists "property" as "name", assuming a mistake.
     & attribute property { type_property }
-    & comparator
+    & attr_comparator
     & attribute value { type_float_expression }
 }
 
 ## Triggers when a key is pressed on a game master console.
-if_gm_key = element if_gm_key { keyText | keyValue }
+if_gm_key = element if_gm_key { attr_keyText | attr_value }
 
 ## Triggers when a key is pressed on a key-activated console.
 ## NOTE: use start_getting_keypresses_from and end_getting_keypresses_from to
 ## key-activate a console.
-if_client_key = element if_client_key { keyText | keyValue }
+if_client_key = element if_client_key { attr_keyText | attr_value }
 
 # }}} END condition elements
 
@@ -509,49 +509,49 @@ if_client_key = element if_client_key { keyText | keyValue }
 ###############################################################################
 # {{{ BEGIN common attribute definitions
 
-name_attribute = attribute name { text }
+attr_name = attribute name { text }
 
-unnamedType = attribute type { "nebulas" | "asteroids" | "mines" }
+attr_type_unnamed = attribute type { "nebulas" | "asteroids" | "mines" }
 
-use_gm_selection = attribute use_gm_selection { type_ignored }
+attr_use_gm_selection = attribute use_gm_selection { type_ignored }
 
-use_gm_position = attribute use_gm_position { type_ignored }
+attr_use_gm_position = attribute use_gm_position { type_ignored }
 
-position = (
+attr_position = (
     attribute x { type_xz_value }
     & attribute y { type_y_value }
     & attribute z { type_xz_value }
 )
 
-point = (
+attr_point = (
     attribute pointX { type_xz_value }
     & attribute pointY { type_y_value }
     & attribute pointZ { type_xz_value }
 )
 
-centerPosition = (
+attr_center = (
     attribute centerX { type_xz_value }
     & attribute centerY { type_y_value }
     & attribute centerZ { type_xz_value }
 )
 
-startPosition = (
+attr_start = (
     attribute startX { type_xz_value }
     & attribute startY { type_y_value }
     & attribute startZ { type_xz_value }
 )
 
-endPosition = (
+attr_end = (
     attribute endX { type_xz_value }
     & attribute endY { type_y_value }
     & attribute endZ { type_xz_value }
 )
 
 ## Damcon team index.
-team_index = attribute team_index { xsd:integer { minInclusive="0" maxInclusive="2" } }
+attr_team_index = attribute team_index { xsd:integer { minInclusive="0" maxInclusive="2" } }
 
 ## Comparison operator to use in condition.
-comparator = attribute comparator { type_comparator_operator }
+attr_comparator = attribute comparator { type_comparator_operator }
 
 ## Single letter (usually upper case).
 ## TODO: Can this include other characters?
@@ -559,9 +559,9 @@ comparator = attribute comparator { type_comparator_operator }
 ## upper-case is the suggested style.
 ## TODO: Documentation only mentions letters, but digits and space have been
 ## seen also.
-keyText = attribute keyText { xsd:string { pattern="[A-Za-z0-9 ]" } }
-## Raw key scan code (note that attribute name is "value", not "keyValue").
-keyValue = attribute value { xsd:integer { minInclusive="0" maxInclusive="128" } }
+attr_keyText = attribute keyText { xsd:string { pattern="[A-Za-z0-9 ]" } }
+## Raw key scan code (note that attribute name is "value", not "attr_value").
+attr_value = attribute value { xsd:integer { minInclusive="0" maxInclusive="128" } }
 
 # }}} END common attribute definitions
 ###############################################################################
