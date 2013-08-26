@@ -2,6 +2,9 @@
 # MISSION SCRIPT DOCS FOR ARTEMIS SBS V2.0
 # 7/26/2013
 # rev 10
+# 
+# Additional notes taken from:
+# http://artemiswiki.pbworks.com/w/page/51089094/command_create
 #
 # TODO: Determine:
 # * Are attribute names case-insensitive in Artemis? (some mission scripts seem to think they are)
@@ -95,7 +98,7 @@ create = (
             | attribute hullID { xsd:integer { minInclusive="0" } }
         )
         & attribute angle { type_angle_degrees }?
-        # TODO: Have seen -1 as a value for this, not sure what it means. (do not assign to fleet?)
+        # -1 means to not assign to a fleet.
         & attribute fleetnumber { type_integer_expression | type_fleet_number | "-1" }?
         & attribute sideValue { type_integer_expression | xsd:integer { minInclusive="0" maxInclusive="31" } }?
 
@@ -120,24 +123,49 @@ create = (
     # The command that creates UNnamed objects in the game.
     | element create {
         attr_type_unnamed
+        # Number of unnamed objects to be created. You can use values over 500
+        # just fine, despite game manual specifying 500 as the max value.
         & attribute count { type_integer_expression | xsd:integer { minInclusive="0" maxInclusive="500" } }
+        # Random spread range, defines how far will unnamed objects spread from
+        # the line or the circle.
         & attribute randomRange { type_xz_value }?
+        # The number used to generate the random distribution of objects.
         & attribute randomSeed { type_integer_expression | xsd:integer { minInclusive="0" } }?
+        & (
+            attr_start
+            # If attribute is present (any value will suffice), the startx and
+            # startz attributes are defined by GM console position.
+            | attr_use_gm_position
+        )
         # Either:
         & (
-            # * Rectangular region.
-            (
-                # TODO: Should this include attr_use_gm_position?
-                ((attr_start | attr_use_gm_position) & attr_end)
-            )
-            # * Circular (spherical?) region.
+            # * Line.
+            attr_end
+            # * Circle.
             | (
-                (attr_start | attr_use_gm_position)
-                & attribute radius { type_xz_value }
-                & (
-                    attribute startAngle { type_angle_degrees }
-                    & attribute endAngle { type_angle_degrees }
-                )?
+                # The distance around the startX, startY, startZ point in which
+                # these objects are created. If this is equal to 0, objects are
+                # created in a line defined by start and end coordinates. If
+                # this is greater than 0, objects are created in a circle
+                # defined by start coordinate and this radius.
+                attribute radius { type_xz_value }
+                # Used to spawn objects in an arc instead of a full circle.
+                #
+                # If both are not specified, objects are spawned in a
+                # circle or a line. If one is specified, and other isnt,
+                # unspecified value is considered to be 0.
+                #
+                # Arc will always go from the lowest of the two angles to
+                # the highest clockwise, so if you want to have, for
+                # example, an arc from 330 to 30, you have to specify -30
+                # and 30, otherwise you'll get an arc from 30 to 330.
+                #
+                # You can have an arc longer than 2*pi*radius (like, if you
+                # have angles -180 and 360, you'll have twice as many
+                # objects in the left half circle than the right, because
+                # the arc goes 540 degrees, overlapping.
+                & attribute startAngle { type_angle_degrees }?
+                & attribute endAngle { type_angle_degrees }?
             )
         )
     }
@@ -593,9 +621,7 @@ type_fleet_number = xsd:integer { minInclusive="0" maxInclusive="99" }
 
 type_xz_value = type_integer_expression | xsd:integer { minInclusive="0" maxInclusive="100000" }
 type_y_value = type_integer_expression | xsd:integer { minInclusive="-100000" maxInclusive="100000" }
-# TODO: Documentation doesn't state if degrees are integer or float. Have seen
-# float value in MISS_AttractMode.
-type_angle_degrees = xsd:float { minInclusive="0.0" maxInclusive="360.0" }
+type_angle_degrees = xsd:float { minInclusive="-360.0" maxInclusive="360.0" }
 type_float_zero_to_one = type_float_expression | xsd:float { minInclusive="0.0" maxInclusive="1.0" }
 
 type_system_type_name = (
