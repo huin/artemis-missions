@@ -39,13 +39,13 @@ class DirectiveError(Error):
 
 def _check_identifier(directive, ident):
     if not _IDENTIFIER_RE.match(ident):
-        directive._raise_error("bad identifier: {!r}".format(ident))
+        directive._raise_error("bad identifier: {!r}", ident)
 
 
 def _check_duplicate(directive, container, name, desc):
     if name in container:
-        directive._raise_error("duplicate {desc}: {name!r}".format(
-            name=name, desc=desc))
+        directive._raise_error("duplicate {desc}: {name!r}",
+            name=name, desc=desc)
 
 
 class Directive(object):
@@ -63,10 +63,10 @@ class Directive(object):
             prior.addnext(node)
             prior = node
 
-    def _raise_error(self, msg):
+    def _raise_error(self, fmt, *args, **kw):
         raise DirectiveError(
                 node=self.comment,
-                msg=msg)
+                msg=fmt.format(*args, **kw))
 
     DIRECTIVE_TYPES = {}
     @classmethod
@@ -95,8 +95,8 @@ class ProcDirective(Directive):
     def _parse_content(self, content):
         match = _PROC_RE.match(content)
         if not match:
-            self._raise_error(
-                    "badly formed procedure definition: {!r}".format(content))
+            self._raise_error("badly formed procedure definition: {!r}",
+                    content)
         self.name, args_str = match.groups()
         if not args_str:
             self.arg_names = frozenset()
@@ -117,9 +117,8 @@ class ProcDirective(Directive):
 
     def execute_directive(self, ctx):
         if self.name in ctx.procs:
-            self._raise_error(
-                    "duplicate definitions for procedure {!r}".format(
-                        self.name))
+            self._raise_error("duplicate definitions for procedure {!r}",
+                    self.name)
         ctx.procs[self.name] = self
 
         call_var = self._call_var
@@ -143,12 +142,12 @@ class ProcDirective(Directive):
         provided_args = arg_exprs.keys()
         unexpected_args = provided_args - self.arg_names
         if unexpected_args:
-            self._raise_error("unexpected arguments: {}".format(
-                repr(n) for n in sorted(unexpected_args)))
+            self._raise_error("unexpected arguments: {}",
+                ",".join(repr(n) for n in sorted(unexpected_args)))
         missing_args = self.arg_names - provided_args
         if missing_args:
-            self._raise_error("missing arguments: {}".format(
-                repr(n) for n in sorted(missing_args)))
+            self._raise_error("missing arguments: {}",
+                ",".join(repr(n) for n in sorted(missing_args)))
 
     def sched_nodes(self, arg_exprs):
         self._check_args(arg_exprs)
@@ -166,8 +165,8 @@ class _BaseInvokeProcDirective(Directive):
     def _parse_content(self, content):
         match = _PROC_RE.match(content)
         if not match:
-            self._raise_error("badly formed procedure definition: {!r}".format(
-                content))
+            self._raise_error("badly formed procedure definition: {!r}",
+                content)
         self.proc_name, args_str = match.groups()
         self.arg_exprs = {}
         if args_str:
@@ -186,7 +185,7 @@ class DeferProcDirective(_BaseInvokeProcDirective):
         try:
             proc = ctx.procs[self.proc_name]
         except KeyError:
-            self._raise_error("unknown procedure: {!r}".format(self.proc_name))
+            self._raise_error("unknown procedure: {!r}", self.proc_name)
         self._insert_after_comment(proc.sched_nodes(self.arg_exprs))
 
 
