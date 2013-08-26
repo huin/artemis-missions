@@ -204,7 +204,7 @@ def process(script):
             directive_groups[directive.TYPE].append(directive)
 
     ctx = _Context()
-    order = ["PROC", "INLINE_PROC", "SCHED_PROC"]
+    order = ["PROC", "SCHED_PROC"]
     for type_name in order:
         for directive in directive_groups[type_name]:
             directive.execute_directive(ctx)
