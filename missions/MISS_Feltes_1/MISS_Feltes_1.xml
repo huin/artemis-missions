@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mission_data>
+    <!-- See: https://docs.google.com/document/d/1-snb6PM52Wfxi2RTbhrHr5B-qAhCN4jqXeDlshOxPxI/edit -->
+    <start>
+        <!-- Start out in "Start" -->
+        <set_variable name="call#init_sector" value="1"/>
+        <set_variable name="call#init_sector#index" value="0"/>
+        <set_timer name="mission_start" seconds="15"/>
+        <set_timer name="intro" seconds="10"/>
+        <create type="player" name="Artemis" x="56000" y="0" z="48000"/>
+    </start>
+    <event>
+        <if_variable name="call#clear_all_unnamed" comparator="EQUALS" value="1"/>
+        <set_variable name="call#clear_all_unnamed" value="0"/>
+
+        <destroy_near type="asteroids" centerX="50000" centerY="0" centerZ="50000" radius="100000"/>
+        <destroy_near type="mines" centerX="50000" centerY="0" centerZ="50000" radius="100000"/>
+        <destroy_near type="nebulas" centerX="50000" centerY="0" centerZ="50000" radius="100000"/>
+    </event>
+    <event>
+        <!-- Sector index #0: "Start" -->
+        <if_variable name="call#init_sector" comparator="EQUALS" value="1"/>
+        <if_variable name="call#init_sector#index" comparator="EQUALS" value="0"/>
+        <set_variable name="call#init_sector" value="0"/>
+        <set_variable name="call#init_sector#index" value="-1"/>
+
+        <!-- Decorations: -->
+        <!-- Nebulas in top-left of sector -->
+        <create type="nebulas" startX="82000" startY="0" startZ="9400" count="40" radius="7000" randomRange="9000" randomSeed="3"/>
+        <!-- Light scattering of nebulas in middle of sector -->
+        <create type="nebulas" startX="60000" startY="0" startZ="40000" count="70" radius="60000" randomRange="60000" randomSeed="4"/>
+        <!-- Light scattering of asteroids across the sector -->
+        <create type="asteroids" startX="50000" startY="0" startZ="50000" count="50" radius="50000" randomRange="50000" randomSeed="5"/>
+
+        <!-- Station in C4 -->
+        <create type="station" name="Base" x="83000" y="0" z="63000"/>
+        <!-- Ensure that there are no asteroids too close to the station. -->
+        <destroy_near type="asteroids" name="Base" radius="1000">
+
+        <!-- Gate to New Lhasa TODO: appearance, behaviour -->
+        <create type="genericMesh" name="Jump gate" x="3000" y="0" z="2500"/>
+        <!-- Ensure that there are no asteroids too close to the gate. -->
+        <destroy_near type="asteroids" name="Jump gate" radius="2000">
+
+        <!-- TODO: mining vessels -->
+    </event>
+    <event>
+        <if_timer_finished name="intro"/>
+        <big_message title="Mission 1" subtitle1="Written by Michael Feltes"/>
+    </event>
+
+</mission_data>
