@@ -2,9 +2,8 @@
 <mission_data version="2.0">
     <!-- See: https://docs.google.com/document/d/1-snb6PM52Wfxi2RTbhrHr5B-qAhCN4jqXeDlshOxPxI/edit -->
     <start>
-        <!-- Start out in "Start" -->
-        <set_variable name="call#init_sector" value="1"/>
-        <set_variable name="call#init_sector#index" value="0"/>
+        <!-- Start out in sector "Start" -->
+        <!-- !SCHED_PROC init_sector_0() -->
         <set_timer name="intro" seconds="10"/>
         <set_variable name="intro#state" value="1"/>
         <set_timer name="mission_start" seconds="15"/>
@@ -13,29 +12,20 @@
     </start>
     <!-- Subroutines -->
     <event>
-        <if_variable name="call#jump_gate" comparator="EQUALS" value="1"/>
-        <set_variable name="call#jump_gate" value="0"/>
-        <log text="call#jump_gate"/>
-        <create type="blackHole" x="_call_jump_gate_x" y="0" z="_call_jump_gate_z"/>
+        <!-- !PROC jump_gate(x,z,dest_sector) -->
+        <create type="blackHole" x="arg_x" y="0" z="arg_z"/>
         <!-- TODO: jump gate state stuff -->
     </event>
     <event>
-        <if_variable name="call#clear_all_unnamed" comparator="EQUALS" value="1"/>
-        <set_variable name="call#clear_all_unnamed" value="0"/>
-        <log text="clear_all_unnamed"/>
-
+        <!-- !PROC clear_all_unnamed() -->
         <destroy_near type="asteroids" centerX="50000" centerY="0" centerZ="50000" radius="100000"/>
         <destroy_near type="mines" centerX="50000" centerY="0" centerZ="50000" radius="100000"/>
         <destroy_near type="nebulas" centerX="50000" centerY="0" centerZ="50000" radius="100000"/>
     </event>
     <!-- Sector subroutines -->
     <event>
-        <!-- Sector index #0: "Start" -->
-        <if_variable name="call#init_sector" comparator="EQUALS" value="1"/>
-        <if_variable name="call#init_sector#index" comparator="EQUALS" value="0"/>
-        <log text="call#init_sector index=0"/>
-        <set_variable name="call#init_sector" value="0"/>
-        <set_variable name="call#init_sector#index" value="-1"/>
+        <!-- Sector "Start" -->
+        <!-- !PROC init_sector_0() -->
 
         <!-- Decorations: -->
         <!-- Nebulas in top-left of sector -->
@@ -93,10 +83,6 @@
             Go to sector A5 and prepare for transit.
         </incoming_comms_text>
 
-        <!-- jump_gate(x=11000,z=9500,dest_sector=2) -->
-        <set_variable name="call#jump_gate" value="1"/>
-        <set_variable name="_call_jump_gate_x" value="11000"/>
-        <set_variable name="_call_jump_gate_z" value="9500"/>
-        <set_variable name="_call_jump_gate_dest_sector" value="2"/>
+        <!-- !SCHED_PROC jump_gate(x=11000,z=9500,dest_sector=2) -->
     </event>
 </mission_data>
