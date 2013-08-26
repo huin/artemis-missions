@@ -1,26 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
-<mission_data>
+<mission_data version="2.0">
     <!-- See: https://docs.google.com/document/d/1-snb6PM52Wfxi2RTbhrHr5B-qAhCN4jqXeDlshOxPxI/edit -->
     <start>
         <!-- Start out in "Start" -->
         <set_variable name="call#init_sector" value="1"/>
         <set_variable name="call#init_sector#index" value="0"/>
-        <set_timer name="mission_start" seconds="15"/>
         <set_timer name="intro" seconds="10"/>
+        <set_variable name="intro#state" value="1"/>
+        <set_timer name="mission_start" seconds="15"/>
+        <set_variable name="mission#state" value="1"/>
         <create type="player" name="Artemis" x="56000" y="0" z="48000"/>
     </start>
+    <!-- Subroutines -->
+    <event>
+        <if_variable name="call#jump_gate" comparator="EQUALS" value="1"/>
+        <set_variable name="call#jump_gate" value="0"/>
+        <log text="call#jump_gate"/>
+        <create type="blackHole" x="_call_jump_gate_x" y="0" z="_call_jump_gate_z"/>
+        <!-- TODO: jump gate state stuff -->
+    </event>
     <event>
         <if_variable name="call#clear_all_unnamed" comparator="EQUALS" value="1"/>
         <set_variable name="call#clear_all_unnamed" value="0"/>
+        <log text="clear_all_unnamed"/>
 
         <destroy_near type="asteroids" centerX="50000" centerY="0" centerZ="50000" radius="100000"/>
         <destroy_near type="mines" centerX="50000" centerY="0" centerZ="50000" radius="100000"/>
         <destroy_near type="nebulas" centerX="50000" centerY="0" centerZ="50000" radius="100000"/>
     </event>
+    <!-- Sector subroutines -->
     <event>
         <!-- Sector index #0: "Start" -->
         <if_variable name="call#init_sector" comparator="EQUALS" value="1"/>
         <if_variable name="call#init_sector#index" comparator="EQUALS" value="0"/>
+        <log text="call#init_sector index=0"/>
         <set_variable name="call#init_sector" value="0"/>
         <set_variable name="call#init_sector#index" value="-1"/>
 
@@ -28,25 +41,62 @@
         <!-- Nebulas in top-left of sector -->
         <create type="nebulas" startX="82000" startY="0" startZ="9400" count="40" radius="7000" randomRange="9000" randomSeed="3"/>
         <!-- Light scattering of nebulas in middle of sector -->
-        <create type="nebulas" startX="60000" startY="0" startZ="40000" count="70" radius="60000" randomRange="60000" randomSeed="4"/>
+        <create type="nebulas" startX="60000" startY="0" startZ="40000" count="70" radius="25000" randomRange="25000" randomSeed="4"/>
         <!-- Light scattering of asteroids across the sector -->
-        <create type="asteroids" startX="50000" startY="0" startZ="50000" count="50" radius="50000" randomRange="50000" randomSeed="5"/>
+        <create type="asteroids" startX="50000" startY="0" startZ="50000" count="50" radius="25000" randomRange="25000" randomSeed="5"/>
 
         <!-- Station in C4 -->
-        <create type="station" name="Base" x="83000" y="0" z="63000"/>
+        <create type="station" raceKeys="friendly" hullKeys="base" name="Base" x="83000" y="0" z="53000"/>
         <!-- Ensure that there are no asteroids too close to the station. -->
-        <destroy_near type="asteroids" name="Base" radius="1000">
+        <destroy_near type="asteroids" name="Base" radius="1000"/>
 
         <!-- Gate to New Lhasa TODO: appearance, behaviour -->
-        <create type="genericMesh" name="Jump gate" x="3000" y="0" z="2500"/>
+        <!-- TODO: Move this to be created after mission start -->
+        <!--create type="genericMesh" name="Jump gate" x="3000" y="0" z="2500" /-->
         <!-- Ensure that there are no asteroids too close to the gate. -->
-        <destroy_near type="asteroids" name="Jump gate" radius="2000">
+        <destroy_near type="asteroids" name="Jump gate" radius="2000"/>
 
         <!-- TODO: mining vessels -->
     </event>
+    <!-- Intro state machine -->
     <event>
+        <if_variable name="intro#state" comparator="EQUALS" value="1"/>
         <if_timer_finished name="intro"/>
+        <set_variable name="intro#state" value="2"/>
+        <log text="intro#state=2"/>
         <big_message title="Mission 1" subtitle1="Written by Michael Feltes"/>
     </event>
+    <!-- Mission state machine -->
+    <event>
+        <if_variable name="mission#state" comparator="EQUALS" value="1"/>
+        <if_timer_finished name="mission_start"/>
+        <set_variable name="mission#state" value="2"/>
+        <log text="mission#state=2"/>
+        <incoming_comms_text from="TSN Command">
+            Artemis, you are being dispatched to our colony New Lhasa. We have
+            received unsubstantiated reports that something might happen there
+            and so we need you to take charge of the facility and prepare
+            defenses.^
+            If anything happens, do not make the first move. That is an order
+            captain.^
+            Good luck.
+        </incoming_comms_text>
+        <set_timer name="announce_jump_gate" seconds="10"/>
+    </event>
+    <event>
+        <if_variable name="mission#state" comparator="EQUALS" value="2"/>
+        <if_timer_finished name="announce_jump_gate"/>
+        <set_variable name="mission#state" value="3"/>
+        <log text="mission#state=3"/>
+        <incoming_comms_text from="Base">
+            Captain we are preparing jump gate.^
+            Go to sector A5 and prepare for transit.
+        </incoming_comms_text>
 
+        <!-- jump_gate(x=11000,z=9500,dest_sector=2) -->
+        <set_variable name="call#jump_gate" value="1"/>
+        <set_variable name="_call_jump_gate_x" value="11000"/>
+        <set_variable name="_call_jump_gate_z" value="9500"/>
+        <set_variable name="_call_jump_gate_dest_sector" value="2"/>
+    </event>
 </mission_data>
