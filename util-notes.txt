@@ -1,0 +1,15 @@
+Sector declaration:
+* Objects in sector. (for destruction and creation when navigating)
+* Objects to keep asteroids/mines clear of.
+* Whale pods. (save from having to create each whale by hand)
+* Navigation points/gates.
+
+Subroutines?
+
+Include things from other files (library support).
+
+State graphs and transitions?
+* Exit condition as set of condition element(s).
+* transition as subroutine call(s)
+
+Object placement visualization. Name an event to run creates/destroys on. Display result.
