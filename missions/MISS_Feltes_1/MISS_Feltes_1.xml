@@ -140,7 +140,7 @@
 
         <set_variable name="jump_gate_1_state" value="2"/>
 
-        <create type="genericMesh" name="Jump gate [New Lhasa]" x="11000" y="0" z="9500"/>
+        <create type="genericMesh" name="Jump gate [New Lhasa]" meshFileName="dat\mine.dxs" textureFileName="dat\ship3_spec_1024.png" x="11000" y="0" z="9500"/>
         <!-- Ensure that there are no asteroids too close to the gate. -->
         <destroy_near type="asteroids" name="Jump gate [New Lhasa]" radius="2000"/>
     </event>
