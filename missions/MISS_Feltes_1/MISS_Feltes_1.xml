@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mission_data version="2.0">
+    <!-- See: https://docs.google.com/document/d/1-snb6PM52Wfxi2RTbhrHr5B-qAhCN4jqXeDlshOxPxI/edit -->
+    <!--
+    Variables:
+    * sector_state - sector change state.
+        * 0 => in sector
+        * 1 => clear old sector of named objects (defined on a per-sector basis)
+        * 2 => clear old sector of unnamed objects (defined globally), update
+          sector_id to sector_dest_id
+        * 3 => populate new sector
+    * sector_id - ID of current sector, or ID of old sector when changing.
+    * sector_dest_id - ID of destination sector when changing.
+
+    To change sector:
+    * Set sector_state to 1
+    * Set sector_dest_id to the destination sector ID
+
+    To define a sector with ID X:
+    * Define an event with the following conditions to populate the sector:
+        <if_variable name="sector_state" comparator="EQUALS" value="3"/>
+        <if_variable name="sector_id" comparator="EQUALS" value="X"/>
+    * Define an event with the following conditions to remove named objects from the sector:
+        <if_variable name="sector_state" comparator="EQUALS" value="1"/>
+        <if_variable name="sector_id" comparator="EQUALS" value="X"/>
+    -->
+    <start>
+        <create type="player" name="Artemis" x="56000" y="0" z="48000"/>
+
+        <set_variable name="credits_state" value="1"/>
+        <set_variable name="mission_state" value="1"/>
+        <set_variable name="jump_gate_1_state" value="0"/>
+
+        <!-- Populate first sector -->
+        <set_variable name="sector_state" value="3"/>
+        <set_variable name="sector_id" value="1"/>
+    </start>
+
+    <!-- {{{ Sectors -->
+
+    <!-- {{{ Sector 1 - starting sector -->
+    <event>
+        <!-- Sector setup -->
+        <if_variable name="sector_state" comparator="EQUALS" value="3"/>
+        <if_variable name="sector_id" comparator="EQUALS" value="1"/>
+
+        <!-- Decorations: -->
+        <!-- Nebulas in top-left of sector -->
+        <create type="nebulas" startX="82000" startY="0" startZ="9400" count="40" radius="7000" randomRange="9000" randomSeed="3"/>
+        <!-- Light scattering of nebulas in middle of sector -->
+        <create type="nebulas" startX="60000" startY="0" startZ="40000" count="70" radius="25000" randomRange="25000" randomSeed="4"/>
+        <!-- Light scattering of asteroids across the sector -->
+        <create type="asteroids" startX="50000" startY="0" startZ="50000" count="50" radius="25000" randomRange="25000" randomSeed="5"/>
+
+        <!-- Station in C4 -->
+        <create type="station" raceKeys="friendly" hullKeys="base" name="Base" x="83000" y="0" z="53000"/>
+        <!-- Ensure that there are no asteroids too close to the station. -->
+        <destroy_near type="asteroids" name="Base" radius="1000"/>
+        <!-- TODO: mining vessels -->
+    </event>
+    <event>
+        <!-- Sector teardown -->
+        <if_variable name="sector_state" comparator="EQUALS" value="2"/>
+        <if_variable name="sector_id" comparator="EQUALS" value="1"/>
+
+        <destroy name="Base"/>
+        <!-- TODO: mining vessels -->
+    </event>
+    <!-- }}} Sector 1 - starting sector -->
+
+    <!-- }}} Sectors -->
+
+    <!-- {{{ Credits state machine -->
+    <event>
+        <if_variable name="credits_state" comparator="EQUALS" value="1"/>
+
+        <set_variable name="credits_state" value="2"/>
+        <set_timer name="credits" seconds="10"/>
+    </event>
+    <event>
+        <if_variable name="credits_state" comparator="EQUALS" value="2"/>
+        <if_timer_finished name="credits"/>
+
+        <set_variable name="credits_state" value="0"/>
+        <big_message title="Mission 1" subtitle1="Written by Michael Feltes"/>
+    </event>
+    <!-- }}} Credits state machine -->
+
+    <!-- {{{ Mission state machine -->
+    <event>
+        <if_variable name="mission_state" comparator="EQUALS" value="1"/>
+
+        <set_variable name="mission_state" value="2"/>
+        <set_timer name="mission_start" seconds="15"/>
+    </event>
+    <event>
+        <if_variable name="mission_state" comparator="EQUALS" value="2"/>
+        <if_timer_finished name="mission"/>
+
+        <set_variable name="mission_state" value="3"/>
+        <set_timer name="mission" seconds="10"/>
+
+        <incoming_comms_text from="TSN Command">
+            Artemis, you are being dispatched to our colony New Lhasa. We have
+            received unsubstantiated reports that something might happen there
+            and so we need you to take charge of the facility and prepare
+            defenses.^
+            If anything happens, do not make the first move. That is an order,
+            captain.^
+            Good luck.
+        </incoming_comms_text>
+    </event>
+    <event>
+        <if_variable name="mission_state" comparator="EQUALS" value="3"/>
+        <if_timer_finished name="jump_gate"/>
+
+        <set_variable name="mission_state" value="4"/>
+
+        <incoming_comms_text from="Base">
+            Captain, we are preparing jump gate.^
+            Go to sector A5 and prepare for transit.
+        </incoming_comms_text>
+
+        <!-- Open jump gate -->
+        <set_variable name="jump_gate_1_state" value="1"/>
+        <!-- Start nagging Artemis if they don't jump in a reasonable length of
+             time, eventually lose the game. -->
+        <set_variable name="jump_nag" value="1"/>
+    </event>
+    <event>
+        <if_variable name="mission_state" comparator="EQUALS" value="4"/>
+        <if_timer_finished name="must_have_jumped"/>
+    </event>
+    <!-- }}} Mission state machine -->
+
+    <!-- {{{ Jump gate 1 state machine -->
+    <event>
+        <!-- Set up the jump gate. -->
+        <if_variable name="jump_gate_1_state" comparator="EQUALS" value="1"/>
+
+        <set_variable name="jump_gate_1_state" value="2"/>
+
+        <create type="genericMesh" name="Jump gate [New Lhasa]" x="11000" y="0" z="9500"/>
+        <!-- Ensure that there are no asteroids too close to the gate. -->
+        <destroy_near type="asteroids" name="Jump gate [New Lhasa]" radius="2000"/>
+    </event>
+    <event>
+        <!-- Artemis approaches the jump gate, it opens. -->
+        <if_variable name="jump_gate_1_state" comparator="EQUALS" value="2"/>
+        <if_distance name1="Jump gate [New Lhasa]" name2="Artemis" comparator="LESS_EQUAL" value="10000"/>
+
+        <set_variable name="jump_gate_1_state" value="3"/>
+
+        <create name="jump_gate_1" type="blackHole" x="11000" y="0" z="9500"/>
+        <incoming_comms_text from="Base">
+            Captain, jump gate is opening now. Approach the event horizon at full impulse.
+        </incoming_comms_text>
+    </event>
+    <event>
+        <!-- Artemis enters the jump gate -->
+        <if_variable name="jump_gate_1_state" comparator="EQUALS" value="3"/>
+        <if_distance name1="Jump gate [New Lhasa]" name2="Artemis" comparator="LESS_EQUAL" value="2000"/>
+
+        <set_variable name="jump_gate_1_state" value="0"/>
+
+        <!-- Jump to sector 2 -->
+        <set_variable name="sector_state" value="1"/>
+        <set_variable name="sector_dest_id" value="2"/>
+
+        <destroy name="Jump gate [New Lhasa]"/>
+        <destroy name="jump_gate_1"/>
+    </event>
+    <!-- }}} Jump gate 1 state machine -->
+
+    <!-- {{{ Jump nag state machine -->
+    <event>
+        <if_variable name="jump_nag" comparator="GREATER" value="0"/>
+        <if_variable name="sector_state" comparator="EQUALS" value="2"/>
+        <!-- Artemis has jumped to New Lhasa, stop nagging -->
+        <set_variable name="jump_nag" value="0"/>
+    </event>
+    <event>
+        <if_variable name="jump_nag" comparator="EQUALS" value="1"/>
+        <set_timer name="jump_nag_timer" seconds="60"/>
+    </event>
+    <event>
+        <if_variable name="jump_nag" comparator="EQUALS" value="2"/>
+        <if_timer_finished name="jump_nag_timer"/>
+        <set_timer name="jump_nag_timer" seconds="60"/>
+        <set_variable name="jump_nag" value="3"/>
+        <incoming_comms_text from="TSN Command">
+            Artemis, please move to New Lhasa immediately. Increasing reports of trouble there.^
+            TSN Command out.
+        </incoming_comms_text>
+    </event>
+    <event>
+        <if_variable name="jump_nag" comparator="EQUALS" value="3"/>
+        <if_timer_finished name="jump_nag_timer"/>
+        <set_timer name="jump_nag_timer" seconds="60"/>
+        <set_variable name="jump_nag" value="4"/>
+        <incoming_comms_text from="TSN Command">
+            Artemis, where are you? The situation in New Lhasa is becoming urgent.
+        </incoming_comms_text>
+    </event>
+    <event>
+        <if_variable name="jump_nag" comparator="EQUALS" value="4"/>
+        <if_timer_finished name="jump_nag_timer"/>
+        <set_timer name="jump_nag_timer" seconds="10"/>
+        <set_variable name="jump_nag" value="0"/>
+        <incoming_comms_text from="TSN Command">
+            Captain, you are relieved from duty. Your security officers are
+            authorized to take you to the brig for disobeying direct orders.
+        </incoming_comms_text>
+
+        <set_variable name="mission_state" value="0"/>
+        <set_variable name="jump_gate_1_state" value="0"/>
+        <set_timer name="mission_end" seconds="10"/>
+    </event>
+    <!-- }}} Jump nag state machine -->
+
+    <event>
+        <if_timer_finished name="mission_end"/>
+        <end_mission/>
+    </event>
+
+    <!-- {{{ Sector state machine. -->
+    <event>
+        <!-- sector_state 3->0 -->
+        <if_variable name="sector_state" comparator="EQUALS" value="3"/>
+        <set_variable name="sector_state" comparator="EQUALS" value="0"/>
+    </event>
+    <event>
+        <!-- sector_state 2->3 -->
+        <if_variable name="sector_state" comparator="EQUALS" value="2"/>
+        <set_variable name="sector_state" value="3"/>
+        <destroy_near type="asteroids" centerX="50000" centerY="0" centerZ="50000" radius="100000"/>
+        <destroy_near type="mines" centerX="50000" centerY="0" centerZ="50000" radius="100000"/>
+        <destroy_near type="nebulas" centerX="50000" centerY="0" centerZ="50000" radius="100000"/>
+        <set_variable name="sector_id" value="sector_dest_id"/>
+    </event>
+    <event>
+        <!-- sector_state 1->2 -->
+        <if_variable name="sector_state" comparator="EQUALS" value="1"/>
+        <set_variable name="sector_state" comparator="EQUALS" value="2"/>
+    </event>
+    <!-- }}} Sector state machine. -->
+</mission_data>
