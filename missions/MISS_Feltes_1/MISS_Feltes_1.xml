@@ -45,6 +45,7 @@
         <if_variable name="sector_id" comparator="EQUALS" value="1"/>
 
         <!-- Decorations: -->
+        <set_skybox_index index="1"/>
         <!-- Nebulas in top-left of sector -->
         <create type="nebulas" startX="82000" startY="0" startZ="9400" count="40" radius="7000" randomRange="9000" randomSeed="3"/>
         <!-- Light scattering of nebulas in middle of sector -->
@@ -67,6 +68,25 @@
         <!-- TODO: mining vessels -->
     </event>
     <!-- }}} Sector 1 - starting sector -->
+
+    <!-- {{{ Sector 2 - New Lhasa -->
+    <event>
+        <!-- Sector setup -->
+        <if_variable name="sector_state" comparator="EQUALS" value="3"/>
+        <if_variable name="sector_id" comparator="EQUALS" value="2"/>
+
+        <!-- Decorations: -->
+        <set_skybox_index index="2"/>
+        <!-- TODO -->
+    </event>
+    <event>
+        <!-- Sector teardown -->
+        <if_variable name="sector_state" comparator="EQUALS" value="2"/>
+        <if_variable name="sector_id" comparator="EQUALS" value="2"/>
+
+        <!-- TODO -->
+    </event>
+    <!-- }}} Sector 2 - New Lhasa -->
 
     <!-- }}} Sectors -->
 
