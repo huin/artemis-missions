@@ -44,6 +44,8 @@
         <if_variable name="sector_state" comparator="EQUALS" value="3"/>
         <if_variable name="sector_id" comparator="EQUALS" value="1"/>
 
+        <log text="Entering sector 1"/>
+
         <!-- Decorations: -->
         <set_skybox_index index="1"/>
         <!-- Nebulas in top-left of sector -->
@@ -74,6 +76,8 @@
         <!-- Sector setup -->
         <if_variable name="sector_state" comparator="EQUALS" value="3"/>
         <if_variable name="sector_id" comparator="EQUALS" value="2"/>
+
+        <log text="Entering sector 2"/>
 
         <!-- Decorations: -->
         <set_skybox_index index="2"/>
@@ -111,7 +115,7 @@
         <if_variable name="mission_state" comparator="EQUALS" value="1"/>
 
         <set_variable name="mission_state" value="2"/>
-        <set_timer name="mission_start" seconds="15"/>
+        <set_timer name="mission" seconds="15"/>
     </event>
     <event>
         <if_variable name="mission_state" comparator="EQUALS" value="2"/>
@@ -132,7 +136,7 @@
     </event>
     <event>
         <if_variable name="mission_state" comparator="EQUALS" value="3"/>
-        <if_timer_finished name="jump_gate"/>
+        <if_timer_finished name="mission"/>
 
         <set_variable name="mission_state" value="4"/>
 
@@ -147,10 +151,7 @@
              time, eventually lose the game. -->
         <set_variable name="jump_nag" value="1"/>
     </event>
-    <event>
-        <if_variable name="mission_state" comparator="EQUALS" value="4"/>
-        <if_timer_finished name="must_have_jumped"/>
-    </event>
+    <!-- TODO -->
     <!-- }}} Mission state machine -->
 
     <!-- {{{ Jump gate 1 state machine -->
@@ -248,6 +249,7 @@
         <!-- sector_state 3->0 -->
         <if_variable name="sector_state" comparator="EQUALS" value="3"/>
         <set_variable name="sector_state" value="0"/>
+        <log text="sector_state 3->0"/>
     </event>
     <event>
         <!-- sector_state 2->3 -->
@@ -257,11 +259,13 @@
         <destroy_near type="mines" centerX="50000" centerY="0" centerZ="50000" radius="100000"/>
         <destroy_near type="nebulas" centerX="50000" centerY="0" centerZ="50000" radius="100000"/>
         <set_variable name="sector_id" value="sector_dest_id"/>
+        <log text="sector_state 2->3"/>
     </event>
     <event>
         <!-- sector_state 1->2 -->
         <if_variable name="sector_state" comparator="EQUALS" value="1"/>
         <set_variable name="sector_state" value="2"/>
+        <log text="sector_state 1->2"/>
     </event>
     <!-- }}} Sector state machine. -->
 </mission_data>
