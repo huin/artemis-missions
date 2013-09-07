@@ -227,7 +227,7 @@
     <event>
         <!-- sector_state 3->0 -->
         <if_variable name="sector_state" comparator="EQUALS" value="3"/>
-        <set_variable name="sector_state" comparator="EQUALS" value="0"/>
+        <set_variable name="sector_state" value="0"/>
     </event>
     <event>
         <!-- sector_state 2->3 -->
@@ -241,7 +241,7 @@
     <event>
         <!-- sector_state 1->2 -->
         <if_variable name="sector_state" comparator="EQUALS" value="1"/>
-        <set_variable name="sector_state" comparator="EQUALS" value="2"/>
+        <set_variable name="sector_state" value="2"/>
     </event>
     <!-- }}} Sector state machine. -->
 </mission_data>
