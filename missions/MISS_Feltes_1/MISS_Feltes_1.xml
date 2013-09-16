@@ -25,7 +25,7 @@
         <if_variable name="sector_id" comparator="EQUALS" value="X"/>
     -->
     <start>
-        <create type="player" name="Artemis" x="56000" y="0" z="48000"/>
+        <create type="player" name="Artemis" x="56000" y="0" z="48000" hullKeys="Scout player"/>
 
         <set_variable name="credits_state" value="1"/>
         <set_variable name="mission_state" value="1"/>
@@ -54,12 +54,19 @@
         <create type="nebulas" startX="60000" startY="0" startZ="40000" count="70" radius="25000" randomRange="25000" randomSeed="4"/>
         <!-- Light scattering of asteroids across the sector -->
         <create type="asteroids" startX="50000" startY="0" startZ="50000" count="50" radius="25000" randomRange="25000" randomSeed="5"/>
+        <!-- Some asteroids in the mining vessel area -->
+        <create type="asteroids" startX="75000" startY="300" startZ="19000" count="10" radius="5000" randomRange="5000" randomSeed="6"/>
+        <create type="asteroids" startX="75000" startY="000" startZ="19000" count="10" radius="5000" randomRange="5000" randomSeed="7"/>
+        <create type="asteroids" startX="75000" startY="-300" startZ="19000" count="10" radius="5000" randomRange="5000" randomSeed="8"/>
 
         <!-- Station in C4 -->
         <create type="station" raceKeys="friendly" hullKeys="base" name="Base" x="83000" y="0" z="53000"/>
         <!-- Ensure that there are no asteroids too close to the station. -->
         <destroy_near type="asteroids" name="Base" radius="1000"/>
-        <!-- TODO: mining vessels -->
+        <!-- Mining vessels -->
+        <create type="neutral" name="MV Z15" x="83000" y="0" z="18200"/>
+        <create type="neutral" name="MV Z12" x="72000" y="0" z="23900"/>
+        <create type="neutral" name="MV G04" x="71030" y="0" z="19300"/>
     </event>
     <event>
         <!-- Sector teardown -->
@@ -67,7 +74,9 @@
         <if_variable name="sector_id" comparator="EQUALS" value="1"/>
 
         <destroy name="Base"/>
-        <!-- TODO: mining vessels -->
+        <destroy name="MV Z15"/>
+        <destroy name="MV Z12"/>
+        <destroy name="MV G04"/>
     </event>
     <!-- }}} Sector 1 - starting sector -->
 
