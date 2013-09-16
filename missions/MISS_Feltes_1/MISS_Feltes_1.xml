@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <mission_data version="2.0">
+    <!-- Note to players: Recommend to play with a scout, on difficulty 11. -->
+
+
     <!-- See: https://docs.google.com/document/d/1-snb6PM52Wfxi2RTbhrHr5B-qAhCN4jqXeDlshOxPxI/edit -->
     <!--
     Variables:
@@ -25,7 +28,7 @@
         <if_variable name="sector_id" comparator="EQUALS" value="X"/>
     -->
     <start>
-        <create type="player" name="Artemis" x="56000" y="0" z="48000" hullKeys="Scout player"/>
+        <create type="player" name="Artemis" x="56000" y="0" z="48000"/>
         <set_difficulty_level value="11"/>
 
         <set_variable name="credits_state" value="1"/>
@@ -61,13 +64,13 @@
         <create type="asteroids" startX="75000" startY="-300" startZ="19000" count="10" radius="5000" randomRange="5000" randomSeed="8"/>
 
         <!-- Station in C4 -->
-        <create type="station" raceKeys="friendly" hullKeys="base" name="Base" x="83000" y="0" z="53000"/>
+        <create type="station" raceKeys="friendly" hullKeys="base" name="Base" x="36000" y="0" z="53000"/>
         <!-- Ensure that there are no asteroids too close to the station. -->
         <destroy_near type="asteroids" name="Base" radius="1000"/>
         <!-- Mining vessels -->
-        <create type="neutral" name="MV Z15" x="83000" y="0" z="18200"/>
-        <create type="neutral" name="MV Z12" x="72000" y="0" z="23900"/>
-        <create type="neutral" name="MV G04" x="71030" y="0" z="19300"/>
+        <create type="neutral" name="MV Z15" x="83000" y="0" z="18200" raceKeys="friendly" hullKeys="Transport transport" angle="30"/>
+        <create type="neutral" name="MV Z12" x="72000" y="0" z="23900" raceKeys="friendly" hullKeys="Transport transport" angle="315"/>
+        <create type="neutral" name="MV G04" x="71030" y="0" z="19300" raceKeys="friendly" hullKeys="Transport transport" angle="230"/>
     </event>
     <event>
         <!-- Sector teardown -->
@@ -92,13 +95,13 @@
         <!-- Decorations: -->
         <set_skybox_index index="11"/>
         <!-- Asteroid belt as a line from A5 to E5 -->
-        <create type="asteroids" startX="10000" startY="0" startZ="0" endX="9000" endY="0" endZ="100000" randomRange="1000" randomSeed="10" count="238"/>
+        <create type="asteroids" startX="10000" startY="0" startZ="0" endX="9000" endY="0" endZ="100000" randomRange="4500" randomSeed="10" count="238"/>
         <!-- Light scattering of nebulas -->
         <create type="nebulas" startX="50000" startY="0" startZ="50000" count="132" radius="25000" randomRange="25000" randomSeed="5"/>
         <!-- TODO -->
 
         <!-- Station in C4 -->
-        <create type="station" raceKeys="friendly" hullKeys="base" name="Omega Base" x="84500" y="0" z="48000"/>
+        <create type="station" raceKeys="friendly" hullKeys="base" name="Omega Base" x="25000" y="0" z="48000"/>
         <!-- Ensure that there are no asteroids too close to the station. -->
         <destroy_near type="asteroids" name="Omega Base" radius="1000"/>
     </event>
@@ -212,10 +215,10 @@
         <!-- TODO: This should (also?) be an audio message. -->
         <incoming_comms_text from="Commander Lloyd">
             Captain I am glad you showed up. We recently received a message
-            from some group called the karelians. It seems they believe this is
+            from some group called the Kraliens. It seems they believe this is
             their planet and are coming to collect taxes from us. we only have
             light defenses and if they come in force we might not be able to
-            hold them off. We have a xenologist on sation named Dr. Moreau who
+            hold them off. We have a xenologist on station named Dr. Moreau who
             has done a little research. She will confer with you later when she
             arrives at the base.
         </incoming_comms_text>
@@ -269,7 +272,17 @@
         <set_variable name="mission_state" value="13"/>
         <set_timer name="mission" seconds="5"/>
 
-        <!-- TODO: Kralien ship arrivals -->
+        <create type="enemy" name="KV 01" x="35800" y="0" z="46000" fleetnumber="1" angle="90" raceKeys="Kralien enemy" hullKeys="Battleship medium"/>
+        <create type="enemy" name="KV 02" x="36000" y="0" z="46200" fleetnumber="1" angle="90" raceKeys="Kralien enemy" hullKeys="Cruiser small"/>
+        <create type="enemy" name="KV 03" x="36000" y="0" z="45800" fleetnumber="1" angle="90" raceKeys="Kralien enemy" hullKeys="Cruiser small"/>
+
+        <create type="enemy" name="KX 01" x="57800" y="0" z="80200" fleetnumber="2" angle="45" hullKeys="Battleship medium"/>
+        <create type="enemy" name="KX 02" x="57000" y="0" z="80000" fleetnumber="2" angle="45" hullKeys="Cruiser small"/>
+        <create type="enemy" name="KX 03" x="57000" y="0" z="79800" fleetnumber="2" angle="45" hullKeys="Cruiser small"/>
+
+        <create type="enemy" name="KW 01" x="24000" y="0" z="20000" fleetnumber="3" angle="180" hullKeys="Battleship medium"/>
+        <create type="enemy" name="KW 02" x="24000" y="0" z="20000" fleetnumber="3" angle="180" hullKeys="Cruiser small"/>
+        <create type="enemy" name="KW 03" x="24000" y="0" z="20000" fleetnumber="3" angle="180" hullKeys="Cruiser small"/>
     </event>
     <event>
         <if_variable name="mission_state" comparator="EQUALS" value="13"/>
@@ -279,7 +292,7 @@
         <set_timer name="mission" seconds="5"/>
 
         <!-- TODO: Maybe label this as being from a specific ship. -->
-        <incoming_comms_text from="Kraliens">We have come to collect what is due to us.</incoming_comms_text>
+        <incoming_comms_text from="KV 01">We have come to collect what is due to us.</incoming_comms_text>
     </event>
     <event>
         <if_variable name="mission_state" comparator="EQUALS" value="14"/>
@@ -288,7 +301,6 @@
         <set_variable name="mission_state" value="15"/>
         <set_timer name="mission" seconds="5"/>
 
-        <!-- TODO: Maybe label this as being from a specific ship. -->
         <incoming_comms_text from="Commander Lloyd">We do not recognize your sovereignty in this sector.</incoming_comms_text>
     </event>
     <event>
@@ -299,7 +311,7 @@
         <set_timer name="mission" seconds="15"/>
 
         <!-- TODO: Maybe label this as being from a specific ship. -->
-        <incoming_comms_text from="Kraliens">Then we shall seize our taxes.</incoming_comms_text>
+        <incoming_comms_text from="KV 01">Then we shall seize our taxes.</incoming_comms_text>
     </event>
     <event>
         <if_variable name="mission_state" comparator="EQUALS" value="16"/>
@@ -317,7 +329,6 @@
         <set_variable name="mission_state" value="18"/>
         <set_timer name="mission" seconds="5"/>
 
-        <!-- TODO: Maybe label this as being from a specific ship. -->
         <incoming_comms_text from="Commander Lloyd">Captain, message from TSN Command. Relaying now....</incoming_comms_text>
     </event>
     <event>
@@ -325,9 +336,8 @@
         <if_timer_finished name="mission"/>
 
         <set_variable name="mission_state" value="19"/>
-        <set_timer name="mission" seconds="7"/>
+        <set_timer name="mission_end" seconds="20"/>
 
-        <!-- TODO: Maybe label this as being from a specific ship. -->
         <incoming_comms_text from="TSN Command">
             All sector captains be advised.^
             The Kraliens have attacked numerous sectors along our borders. We
@@ -374,9 +384,9 @@
         <set_variable name="sector_dest_id" value="2"/>
 
         <!-- Player ship emerges at sector E3 -->
-        <set_object_property name="Artemis" property="positionX" value="88000"/>
+        <set_object_property name="Artemis" property="positionX" value="54000"/>
         <set_object_property name="Artemis" property="positionY" value="0"/>
-        <set_object_property name="Artemis" property="positionZ" value="54000"/>
+        <set_object_property name="Artemis" property="positionZ" value="88000"/>
 
         <destroy name="Jump gate [New Lhasa]"/>
         <destroy name="jump_gate_1"/>
