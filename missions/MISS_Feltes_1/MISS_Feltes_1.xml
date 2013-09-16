@@ -47,7 +47,7 @@
         <log text="Entering sector 1"/>
 
         <!-- Decorations: -->
-        <set_skybox_index index="1"/>
+        <set_skybox_index index="12"/>
         <!-- Nebulas in top-left of sector -->
         <create type="nebulas" startX="82000" startY="0" startZ="9400" count="40" radius="7000" randomRange="9000" randomSeed="3"/>
         <!-- Light scattering of nebulas in middle of sector -->
@@ -80,8 +80,17 @@
         <log text="Entering sector 2"/>
 
         <!-- Decorations: -->
-        <set_skybox_index index="2"/>
+        <set_skybox_index index="11"/>
+        <!-- Asteroid belt as a line from A5 to E5 -->
+        <create type="asteroids" startX="10000" startY="0" startZ="0" endX="9000" endY="0" endZ="100000" randomRange="1000" randomSeed="10" count="238"/>
+        <!-- Light scattering of nebulas -->
+        <create type="nebulas" startX="50000" startY="0" startZ="50000" count="132" radius="25000" randomRange="25000" randomSeed="5"/>
         <!-- TODO -->
+
+        <!-- Station in C4 -->
+        <create type="station" raceKeys="friendly" hullKeys="base" name="Omega Base" x="84500" y="0" z="48000"/>
+        <!-- Ensure that there are no asteroids too close to the station. -->
+        <destroy_near type="asteroids" name="Omega Base" radius="1000"/>
     </event>
     <event>
         <!-- Sector teardown -->
@@ -106,7 +115,7 @@
         <if_timer_finished name="credits"/>
 
         <set_variable name="credits_state" value="0"/>
-        <big_message title="Mission 1" subtitle1="Written by Michael Feltes"/>
+        <big_message title="Opening move" subtitle1="Written by Michael Feltes" subtitle2="Scripted by John Beisley"/>
     </event>
     <!-- }}} Credits state machine -->
 
@@ -151,7 +160,172 @@
              time, eventually lose the game. -->
         <set_variable name="jump_nag" value="1"/>
     </event>
-    <!-- TODO -->
+    <event>
+        <!-- Player has arrived in New Lhasa -->
+        <if_variable name="mission_state" comparator="EQUALS" value="4"/>
+        <if_variable name="sector_state" comparator="EQUALS" value="2"/>
+
+        <set_variable name="mission_state" value="5"/>
+        <set_timer name="mission" seconds="8"/>
+    </event>
+    <event>
+        <if_variable name="mission_state" comparator="EQUALS" value="5"/>
+        <if_timer_finished name="mission"/>
+
+        <set_variable name="mission_state" value="6"/>
+        <set_timer name="mission" seconds="5"/>
+
+        <incoming_comms_text from="Omega base">
+            We have you on screen, Artemis.^
+            Relaying transmission.
+        </incoming_comms_text>
+    </event>
+    <event>
+        <if_variable name="mission_state" comparator="EQUALS" value="6"/>
+        <if_timer_finished name="mission"/>
+
+        <set_variable name="mission_state" value="7"/>
+
+        <!-- TODO: This should (also?) be an audio message. -->
+        <incoming_comms_text from="Commander Lloyd">
+            Captain, I have my orders. You now have command of the sector.
+            I will give you a debrief on our situation as soon as you dock.
+        </incoming_comms_text>
+    </event>
+    <event>
+        <if_variable name="mission_state" comparator="EQUALS" value="7"/>
+        <if_docked name="Omega base"/>
+
+        <set_variable name="mission_state" value="8"/>
+        <set_timer name="mission" seconds="12"/>
+
+        <!-- TODO: This should (also?) be an audio message. -->
+        <incoming_comms_text from="Commander Lloyd">
+            Captain I am glad you showed up. We recently received a message
+            from some group called the karelians. It seems they believe this is
+            their planet and are coming to collect taxes from us. we only have
+            light defenses and if they come in force we might not be able to
+            hold them off. We have a xenologist on sation named Dr. Moreau who
+            has done a little research. She will confer with you later when she
+            arrives at the base.
+        </incoming_comms_text>
+    </event>
+    <event>
+        <if_variable name="mission_state" comparator="EQUALS" value="8"/>
+        <if_timer_finished name="mission"/>
+
+        <set_variable name="mission_state" value="9"/>
+        <set_timer name="mission" seconds="7"/>
+
+        <!-- TODO: This should (also?) be an audio message. -->
+        <incoming_comms_text from="Dr. Moreau">
+            Lloyd I am on my way up. Anything new?
+        </incoming_comms_text>
+    </event>
+    <event>
+        <if_variable name="mission_state" comparator="EQUALS" value="9"/>
+        <if_timer_finished name="mission"/>
+
+        <set_variable name="mission_state" value="10"/>
+        <set_timer name="mission" seconds="8"/>
+
+        <!-- TODO: This should (also?) be an audio message. -->
+        <incoming_comms_text from="Commander Lloyd">The sector commander has arrived. Nothing new from the aliens.</incoming_comms_text>
+    </event>
+    <event>
+        <if_variable name="mission_state" comparator="EQUALS" value="10"/>
+        <if_timer_finished name="mission"/>
+
+        <set_variable name="mission_state" value="11"/>
+        <set_timer name="mission" seconds="20"/>
+
+        <!-- TODO: This should (also?) be an audio message. -->
+        <incoming_comms_text from="Commander Lloyd">Alright. ETA 3 minutes.</incoming_comms_text>
+    </event>
+    <event>
+        <if_variable name="mission_state" comparator="EQUALS" value="11"/>
+        <if_timer_finished name="mission"/>
+
+        <set_variable name="mission_state" value="12"/>
+        <set_timer name="mission" seconds="2"/>
+
+        <!-- TODO: This should (also?) be an audio message. -->
+        <incoming_comms_text from="Commander Lloyd">Wait, I am getting some strange readings.</incoming_comms_text>
+    </event>
+    <event>
+        <if_variable name="mission_state" comparator="EQUALS" value="12"/>
+        <if_timer_finished name="mission"/>
+
+        <set_variable name="mission_state" value="13"/>
+        <set_timer name="mission" seconds="5"/>
+
+        <!-- TODO: Kralien ship arrivals -->
+    </event>
+    <event>
+        <if_variable name="mission_state" comparator="EQUALS" value="13"/>
+        <if_timer_finished name="mission"/>
+
+        <set_variable name="mission_state" value="14"/>
+        <set_timer name="mission" seconds="5"/>
+
+        <!-- TODO: Maybe label this as being from a specific ship. -->
+        <incoming_comms_text from="Kraliens">We have come to collect what is due to us.</incoming_comms_text>
+    </event>
+    <event>
+        <if_variable name="mission_state" comparator="EQUALS" value="14"/>
+        <if_timer_finished name="mission"/>
+
+        <set_variable name="mission_state" value="15"/>
+        <set_timer name="mission" seconds="5"/>
+
+        <!-- TODO: Maybe label this as being from a specific ship. -->
+        <incoming_comms_text from="Commander Lloyd">We do not recognize your sovereignty in this sector.</incoming_comms_text>
+    </event>
+    <event>
+        <if_variable name="mission_state" comparator="EQUALS" value="15"/>
+        <if_timer_finished name="mission"/>
+
+        <set_variable name="mission_state" value="16"/>
+        <set_timer name="mission" seconds="15"/>
+
+        <!-- TODO: Maybe label this as being from a specific ship. -->
+        <incoming_comms_text from="Kraliens">Then we shall seize our taxes.</incoming_comms_text>
+    </event>
+    <event>
+        <if_variable name="mission_state" comparator="EQUALS" value="16"/>
+        <if_timer_finished name="mission"/>
+
+        <set_variable name="mission_state" value="17"/>
+
+        <!-- TODO: Commence battle AI -->
+        <!-- TODO: Trigger occasional messages from Lloyd and Moreau -->
+    </event>
+    <event>
+        <if_variable name="mission_state" comparator="EQUALS" value="17"/>
+        <!-- TODO: Check for all enemies destroyed. -->
+
+        <set_variable name="mission_state" value="18"/>
+        <set_timer name="mission" seconds="5"/>
+
+        <!-- TODO: Maybe label this as being from a specific ship. -->
+        <incoming_comms_text from="Commander Lloyd">Captain, message from TSN Command. Relaying now....</incoming_comms_text>
+    </event>
+    <event>
+        <if_variable name="mission_state" comparator="EQUALS" value="18"/>
+        <if_timer_finished name="mission"/>
+
+        <set_variable name="mission_state" value="19"/>
+        <set_timer name="mission" seconds="7"/>
+
+        <!-- TODO: Maybe label this as being from a specific ship. -->
+        <incoming_comms_text from="TSN Command">
+            All sector captains be advised.^
+            The Kraliens have attacked numerous sectors along our borders. We
+            are now officially in a state of a war. All captains are allowed to
+            use whatever force necessary.
+        </incoming_comms_text>
+    </event>
+
     <!-- }}} Mission state machine -->
 
     <!-- {{{ Jump gate 1 state machine -->
@@ -161,6 +335,7 @@
 
         <set_variable name="jump_gate_1_state" value="2"/>
 
+        <!-- Jump gate in A5 -->
         <create type="genericMesh" name="Jump gate [New Lhasa]" meshFileName="dat\mine.dxs" textureFileName="dat\ship3_spec_1024.png" x="11000" y="0" z="9500"/>
         <!-- Ensure that there are no asteroids too close to the gate. -->
         <destroy_near type="asteroids" name="Jump gate [New Lhasa]" radius="2000"/>
@@ -187,6 +362,11 @@
         <!-- Jump to sector 2 -->
         <set_variable name="sector_state" value="1"/>
         <set_variable name="sector_dest_id" value="2"/>
+
+        <!-- Player ship emerges at sector E3 -->
+        <set_object_property name="Artemis" property="positionX" value="88000"/>
+        <set_object_property name="Artemis" property="positionY" value="0"/>
+        <set_object_property name="Artemis" property="positionZ" value="54000"/>
 
         <destroy name="Jump gate [New Lhasa]"/>
         <destroy name="jump_gate_1"/>
@@ -226,7 +406,6 @@
     <event>
         <if_variable name="jump_nag" comparator="EQUALS" value="4"/>
         <if_timer_finished name="jump_nag_timer"/>
-        <set_timer name="jump_nag_timer" seconds="10"/>
         <set_variable name="jump_nag" value="0"/>
         <incoming_comms_text from="TSN Command">
             Captain, you are relieved from duty. Your security officers are
