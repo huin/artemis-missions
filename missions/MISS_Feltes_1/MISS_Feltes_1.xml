@@ -26,6 +26,7 @@
     -->
     <start>
         <create type="player" name="Artemis" x="56000" y="0" z="48000" hullKeys="Scout player"/>
+        <set_difficulty_level value="11"/>
 
         <set_variable name="credits_state" value="1"/>
         <set_variable name="mission_state" value="1"/>
