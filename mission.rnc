@@ -325,8 +325,10 @@ set_to_gm_position = element set_to_gm_position {
 }
 
 ## Sets the skybox of the main screen to 0-9.
+## Note that the effective indices only seem to be 10-29, as named for the
+## art/sb* directories.
 set_skybox_index = element set_skybox_index {
-    attribute index { xsd:integer { minInclusive="0" maxInclusive="9" } }
+    attribute index { xsd:integer { minInclusive="0" maxInclusive="29" } }
 }
 
 ## Sends a very short message to screens specified.
