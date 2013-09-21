@@ -30,14 +30,7 @@
     <start>
         <create type="player" name="Artemis" x="56000" y="0" z="48000"/>
         <set_difficulty_level value="11"/>
-
-        <set_variable name="credits_state" value="1"/>
-        <set_variable name="mission_state" value="1"/>
-        <set_variable name="jump_gate_1_state" value="0"/>
-
-        <!-- Populate first sector -->
-        <set_variable name="sector_state" value="3"/>
-        <set_variable name="sector_id" value="1"/>
+        <set_variable name="precheck_state" value="1"/>
     </start>
 
     <!-- {{{ Sectors -->
@@ -98,7 +91,6 @@
         <create type="asteroids" startX="10000" startY="0" startZ="0" endX="9000" endY="0" endZ="100000" randomRange="4500" randomSeed="10" count="238"/>
         <!-- Light scattering of nebulas -->
         <create type="nebulas" startX="50000" startY="0" startZ="50000" count="132" radius="25000" randomRange="25000" randomSeed="5"/>
-        <!-- TODO -->
 
         <!-- Station in C4 -->
         <create type="station" raceKeys="friendly" hullKeys="base" name="Omega Base" x="25000" y="0" z="48000"/>
@@ -110,11 +102,45 @@
         <if_variable name="sector_state" comparator="EQUALS" value="2"/>
         <if_variable name="sector_id" comparator="EQUALS" value="2"/>
 
-        <!-- TODO -->
+        <destroy name="Omega Base"/>
     </event>
     <!-- }}} Sector 2 - New Lhasa -->
 
     <!-- }}} Sectors -->
+
+    <!-- {{{ Precheck state machine -->
+    <event>
+        <if_variable name="precheck_state" comparator="EQUALS" value="1"/>
+        <set_variable name="precheck_state" value="2"/>
+        <set_timer name="precheck" seconds="1"/>
+    </event>
+    <event>
+        <if_timer_finished name="precheck"/>
+        <if_variable name="precheck_state" comparator="EQUALS" value="2"/>
+        <if_exists name="Artemis"/>
+        <!-- Precheck success -->
+
+        <set_variable name="precheck_state" value="0"/>
+
+        <set_variable name="credits_state" value="1"/>
+        <set_variable name="mission_state" value="1"/>
+        <set_variable name="jump_gate_1_state" value="0"/>
+        <set_variable name="enemy_setup" value="0"/>
+
+        <!-- Populate first sector -->
+        <set_variable name="sector_state" value="3"/>
+        <set_variable name="sector_id" value="1"/>
+    </event>
+    <event>
+        <if_timer_finished name="precheck"/>
+        <if_variable name="precheck_state" comparator="EQUALS" value="2"/>
+        <!-- Precheck failure -->
+
+        <warning_popup_message message="Error: player ship *must* be named Artemis."/>
+
+        <set_variable name="precheck_state" value="0"/>
+    </event>
+    <!-- }}} Precheck state machine -->
 
     <!-- {{{ Credits state machine -->
     <event>
@@ -188,7 +214,7 @@
         <set_variable name="mission_state" value="6"/>
         <set_timer name="mission" seconds="5"/>
 
-        <incoming_comms_text from="Omega base">
+        <incoming_comms_text from="Omega Base">
             We have you on screen, Artemis.^
             Relaying transmission.
         </incoming_comms_text>
@@ -199,6 +225,8 @@
 
         <set_variable name="mission_state" value="7"/>
 
+        <set_timer name="approach_station_nag" seconds="60"/>
+
         <!-- TODO: This should (also?) be an audio message. -->
         <incoming_comms_text from="Commander Lloyd">
             Captain, I have my orders. You now have command of the sector.
@@ -207,7 +235,7 @@
     </event>
     <event>
         <if_variable name="mission_state" comparator="EQUALS" value="7"/>
-        <if_docked name="Omega base"/>
+        <if_docked name="Omega Base"/>
 
         <set_variable name="mission_state" value="8"/>
         <set_timer name="mission" seconds="12"/>
@@ -230,10 +258,7 @@
         <set_variable name="mission_state" value="9"/>
         <set_timer name="mission" seconds="7"/>
 
-        <!-- TODO: This should (also?) be an audio message. -->
-        <incoming_comms_text from="Dr. Moreau">
-            Lloyd I am on my way up. Anything new?
-        </incoming_comms_text>
+        <incoming_comms_text from="Dr. Moreau">Lloyd I am on my way up. Anything new?</incoming_comms_text>
     </event>
     <event>
         <if_variable name="mission_state" comparator="EQUALS" value="9"/>
@@ -242,7 +267,6 @@
         <set_variable name="mission_state" value="10"/>
         <set_timer name="mission" seconds="8"/>
 
-        <!-- TODO: This should (also?) be an audio message. -->
         <incoming_comms_text from="Commander Lloyd">The sector commander has arrived. Nothing new from the aliens.</incoming_comms_text>
     </event>
     <event>
@@ -252,17 +276,18 @@
         <set_variable name="mission_state" value="11"/>
         <set_timer name="mission" seconds="20"/>
 
-        <!-- TODO: This should (also?) be an audio message. -->
         <incoming_comms_text from="Commander Lloyd">Alright. ETA 3 minutes.</incoming_comms_text>
     </event>
     <event>
         <if_variable name="mission_state" comparator="EQUALS" value="11"/>
         <if_timer_finished name="mission"/>
+        <!-- Player ship should be near the station at this point so that they
+             are not in weapons range of enemies, etc. -->
+        <if_distance name1="Omega Base" name2="Artemis" comparator="LESS_EQUAL" value="500"/>
 
         <set_variable name="mission_state" value="12"/>
         <set_timer name="mission" seconds="2"/>
 
-        <!-- TODO: This should (also?) be an audio message. -->
         <incoming_comms_text from="Commander Lloyd">Wait, I am getting some strange readings.</incoming_comms_text>
     </event>
     <event>
@@ -272,17 +297,7 @@
         <set_variable name="mission_state" value="13"/>
         <set_timer name="mission" seconds="5"/>
 
-        <create type="enemy" name="KV 01" x="35800" y="0" z="46000" fleetnumber="1" angle="90" raceKeys="Kralien enemy" hullKeys="Battleship medium"/>
-        <create type="enemy" name="KV 02" x="36000" y="0" z="46200" fleetnumber="1" angle="90" raceKeys="Kralien enemy" hullKeys="Cruiser small"/>
-        <create type="enemy" name="KV 03" x="36000" y="0" z="45800" fleetnumber="1" angle="90" raceKeys="Kralien enemy" hullKeys="Cruiser small"/>
-
-        <create type="enemy" name="KX 01" x="57800" y="0" z="80200" fleetnumber="2" angle="45" hullKeys="Battleship medium"/>
-        <create type="enemy" name="KX 02" x="57000" y="0" z="80000" fleetnumber="2" angle="45" hullKeys="Cruiser small"/>
-        <create type="enemy" name="KX 03" x="57000" y="0" z="79800" fleetnumber="2" angle="45" hullKeys="Cruiser small"/>
-
-        <create type="enemy" name="KW 01" x="24000" y="0" z="20000" fleetnumber="3" angle="180" hullKeys="Battleship medium"/>
-        <create type="enemy" name="KW 02" x="24000" y="0" z="20000" fleetnumber="3" angle="180" hullKeys="Cruiser small"/>
-        <create type="enemy" name="KW 03" x="24000" y="0" z="20000" fleetnumber="3" angle="180" hullKeys="Cruiser small"/>
+        <set_variable name="enemy_setup" value="1"/>
     </event>
     <event>
         <if_variable name="mission_state" comparator="EQUALS" value="13"/>
@@ -291,7 +306,6 @@
         <set_variable name="mission_state" value="14"/>
         <set_timer name="mission" seconds="5"/>
 
-        <!-- TODO: Maybe label this as being from a specific ship. -->
         <incoming_comms_text from="KV 01">We have come to collect what is due to us.</incoming_comms_text>
     </event>
     <event>
@@ -310,7 +324,6 @@
         <set_variable name="mission_state" value="16"/>
         <set_timer name="mission" seconds="15"/>
 
-        <!-- TODO: Maybe label this as being from a specific ship. -->
         <incoming_comms_text from="KV 01">Then we shall seize our taxes.</incoming_comms_text>
     </event>
     <event>
@@ -319,12 +332,15 @@
 
         <set_variable name="mission_state" value="17"/>
 
-        <!-- TODO: Commence battle AI -->
+        <!-- Commence battle AI -->
+        <set_variable name="initiate_enemy_attack" value="1"/>
         <!-- TODO: Trigger occasional messages from Lloyd and Moreau -->
     </event>
     <event>
         <if_variable name="mission_state" comparator="EQUALS" value="17"/>
-        <!-- TODO: Check for all enemies destroyed. -->
+        <if_not_exists name="KV 01"/><if_not_exists name="KV 02"/><if_not_exists name="KV 03"/>
+        <if_not_exists name="KX 01"/><if_not_exists name="KX 02"/><if_not_exists name="KX 03"/>
+        <if_not_exists name="KW 01"/><if_not_exists name="KW 02"/><if_not_exists name="KW 03"/>
 
         <set_variable name="mission_state" value="18"/>
         <set_timer name="mission" seconds="5"/>
@@ -336,14 +352,50 @@
         <if_timer_finished name="mission"/>
 
         <set_variable name="mission_state" value="19"/>
-        <set_timer name="mission_end" seconds="20"/>
+        <set_timer name="mission" seconds="30"/>
 
         <incoming_comms_text from="TSN Command">
-            All sector captains be advised.^
+            All sector captains be advised:^
             The Kraliens have attacked numerous sectors along our borders. We
-            are now officially in a state of a war. All captains are allowed to
-            use whatever force necessary.
+            are now officially in a state of a war. All captains are authorized
+            to use whatever force they deem necessary to defend our territory.
         </incoming_comms_text>
+
+        <big_message title="Mission outcome: Success" subtitle1="Enemy attackers were destroyed."/>
+        <set_variable name="mission_state" value="0"/>
+        <set_timer name="mission_end" seconds="30"/>
+    </event>
+
+    <!-- Detect mission failure conditions. -->
+    <event>
+        <if_variable name="mission_state" comparator="GREATER_EQUAL" value="5"/>
+        <if_not_exists name="Omega Base"/>
+
+        <big_message title="Mission outcome: Failure" subtitle1="Omega Base was destroyed."/>
+        <set_variable name="mission_state" value="0"/>
+        <set_timer name="mission_end" seconds="10"/>
+    </event>
+
+    <event>
+        <if_variable name="mission_state" comparator="GREATER_EQUAL" value="1"/>
+        <if_not_exists name="Artemis"/>
+
+        <big_message title="Mission outcome: Failure" subtitle1="The Artemis was destroyed."/>
+        <set_variable name="mission_state" value="0"/>
+        <set_timer name="mission_end" seconds="10"/>
+    </event>
+
+    <!-- Mission nag bits: -->
+    <event>
+        <if_distance name1="Omega Base" name2="Artemis" comparator="GREATER" value="500"/>
+        <if_timer_finished name="approach_station_nag" seconds="30"/>
+        <if_variable name="mission_state" comparator="GREATER_EQUAL" value="7"/>
+        <if_variable name="mission_state" comparator="LESS_EQUAL" value="11"/>
+
+        <incoming_comms_text from="Omega Base">
+            Captain, we require you to approach the station.
+        </incoming_comms_text>
+        <set_timer name="approach_station_nag" seconds="30"/>
     </event>
 
     <!-- }}} Mission state machine -->
@@ -442,6 +494,102 @@
         <if_timer_finished name="mission_end"/>
         <end_mission/>
     </event>
+
+    <!-- {{{ Enemies setup state machine -->
+    <!-- Using a state machine for this, as there are rumours that creating
+         ships and setting attributes on them doesn't work within a single
+         event block. -->
+    <event>
+        <if_variable name="enemy_setup" comparator="EQUALS" value="1"/>
+        <set_timer name="enemy_setup" seconds="1"/>
+
+        <set_variable name="enemy_setup" value="2"/>
+
+        <create type="enemy" name="KV 01" x="35800" y="0" z="46000" fleetnumber="1" angle="90" raceKeys="Kralien enemy" hullKeys="Battleship medium"/>
+        <create type="enemy" name="KV 02" x="36000" y="0" z="46200" fleetnumber="1" angle="90" raceKeys="Kralien enemy" hullKeys="Cruiser small"/>
+        <create type="enemy" name="KV 03" x="36000" y="0" z="45800" fleetnumber="1" angle="90" raceKeys="Kralien enemy" hullKeys="Cruiser small"/>
+        <create type="enemy" name="KW 01" x="24000" y="0" z="20000" fleetnumber="3" angle="180" hullKeys="Battleship medium"/>
+        <create type="enemy" name="KW 02" x="24000" y="0" z="20000" fleetnumber="3" angle="180" hullKeys="Cruiser small"/>
+        <create type="enemy" name="KW 03" x="24000" y="0" z="20000" fleetnumber="3" angle="180" hullKeys="Cruiser small"/>
+        <create type="enemy" name="KX 01" x="57800" y="0" z="80200" fleetnumber="2" angle="45" hullKeys="Battleship medium"/>
+        <create type="enemy" name="KX 02" x="57000" y="0" z="80000" fleetnumber="2" angle="45" hullKeys="Cruiser small"/>
+        <create type="enemy" name="KX 03" x="57000" y="0" z="79800" fleetnumber="2" angle="45" hullKeys="Cruiser small"/>
+    </event>
+    <event>
+        <if_variable name="enemy_setup" comparator="EQUALS" value="2"/>
+
+        <set_variable name="enemy_setup" value="3"/>
+
+        <clear_ai name="KV 01"/><clear_ai name="KV 02"/><clear_ai name="KV 03"/>
+        <set_object_property name="KV 01" property="surrenderChance" value="0"/>
+        <set_object_property name="KV 02" property="surrenderChance" value="0"/>
+        <set_object_property name="KV 03" property="surrenderChance" value="0"/>
+        <add_ai name="KV 01" type="TRY_TO_BECOME_LEADER"/>
+        <add_ai name="KV 01" type="CHASE_PLAYER" value1="5000" value2="2000"/>
+        <add_ai name="KV 01" type="CHASE_ANGER"/>
+        <add_ai name="KV 02" type="FOLLOW_LEADER"/>
+        <add_ai name="KV 03" type="FOLLOW_LEADER"/>
+
+        <clear_ai name="KW 01"/><clear_ai name="KW 02"/><clear_ai name="KW 03"/>
+        <set_object_property name="KW 01" property="surrenderChance" value="0"/>
+        <set_object_property name="KW 02" property="surrenderChance" value="0"/>
+        <set_object_property name="KW 03" property="surrenderChance" value="0"/>
+        <add_ai name="KW 01" type="TRY_TO_BECOME_LEADER"/>
+        <add_ai name="KW 01" type="CHASE_PLAYER" value1="5000" value2="2000"/>
+        <add_ai name="KV 01" type="CHASE_ANGER"/>
+        <add_ai name="KW 02" type="FOLLOW_LEADER"/>
+        <add_ai name="KW 03" type="FOLLOW_LEADER"/>
+
+        <clear_ai name="KX 01"/><clear_ai name="KX 02"/><clear_ai name="KX 03"/>
+        <set_object_property name="KX 01" property="surrenderChance" value="0"/>
+        <set_object_property name="KX 02" property="surrenderChance" value="0"/>
+        <set_object_property name="KX 03" property="surrenderChance" value="0"/>
+        <add_ai name="KX 01" type="TRY_TO_BECOME_LEADER"/>
+        <add_ai name="KX 01" type="CHASE_PLAYER" value1="5000" value2="2000"/>
+        <add_ai name="KV 01" type="CHASE_ANGER"/>
+        <add_ai name="KX 02" type="FOLLOW_LEADER"/>
+        <add_ai name="KX 03" type="FOLLOW_LEADER"/>
+    </event>
+    <event>
+        <if_variable name="enemy_setup" comparator="EQUALS" value="3"/>
+        <if_variable name="initiate_enemy_attack" comparator="EQUALS" value="1"/>
+
+        <set_variable name="enemy_setup" value="4"/>
+
+        <clear_ai name="KV 01"/><clear_ai name="KV 02"/><clear_ai name="KV 03"/>
+        <set_object_property name="KV 01" property="surrenderChance" value="0"/>
+        <set_object_property name="KV 02" property="surrenderChance" value="0"/>
+        <set_object_property name="KV 03" property="surrenderChance" value="0"/>
+        <add_ai name="KV 01" type="TRY_TO_BECOME_LEADER"/>
+        <add_ai name="KV 01" type="CHASE_STATION" value1="100000"/>
+        <add_ai name="KV 01" type="CHASE_PLAYER" value1="5000" value2="2000"/>
+        <add_ai name="KV 01" type="CHASE_ANGER"/>
+        <add_ai name="KV 02" type="FOLLOW_LEADER"/>
+        <add_ai name="KV 03" type="FOLLOW_LEADER"/>
+
+        <clear_ai name="KW 01"/><clear_ai name="KW 02"/><clear_ai name="KW 03"/>
+        <set_object_property name="KW 01" property="surrenderChance" value="0"/>
+        <set_object_property name="KW 02" property="surrenderChance" value="0"/>
+        <set_object_property name="KW 03" property="surrenderChance" value="0"/>
+        <add_ai name="KW 01" type="TRY_TO_BECOME_LEADER"/>
+        <add_ai name="KW 01" type="CHASE_STATION" value1="100000"/>
+        <add_ai name="KW 01" type="CHASE_PLAYER" value1="5000" value2="2000"/>
+        <add_ai name="KV 01" type="CHASE_ANGER"/>
+        <add_ai name="KW 02" type="FOLLOW_LEADER"/>
+        <add_ai name="KW 03" type="FOLLOW_LEADER"/>
+
+        <clear_ai name="KX 01"/><clear_ai name="KX 02"/><clear_ai name="KX 03"/>
+        <set_object_property name="KX 01" property="surrenderChance" value="0"/>
+        <set_object_property name="KX 02" property="surrenderChance" value="0"/>
+        <set_object_property name="KX 03" property="surrenderChance" value="0"/>
+        <add_ai name="KX 01" type="TRY_TO_BECOME_LEADER"/>
+        <add_ai name="KX 01" type="CHASE_STATION" value1="100000"/>
+        <add_ai name="KX 01" type="CHASE_PLAYER" value1="5000" value2="2000"/>
+        <add_ai name="KV 01" type="CHASE_ANGER"/>
+        <add_ai name="KX 02" type="FOLLOW_LEADER"/>
+        <add_ai name="KX 03" type="FOLLOW_LEADER"/>
+    </event>
+    <!-- }}} Enemies setup state machine -->
 
     <!-- {{{ Sector state machine. -->
     <event>
