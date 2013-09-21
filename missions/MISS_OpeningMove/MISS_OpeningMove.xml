@@ -33,6 +33,44 @@
         <set_variable name="precheck_state" value="1"/>
     </start>
 
+    <!-- {{{ Precheck state machine -->
+    <event>
+        <if_variable name="precheck_state" comparator="EQUALS" value="1"/>
+        <set_variable name="precheck_state" value="2"/>
+        <set_timer name="precheck" seconds="1"/>
+    </event>
+    <event>
+        <if_timer_finished name="precheck"/>
+        <if_variable name="precheck_state" comparator="EQUALS" value="2"/>
+        <if_exists name="Artemis"/>
+        <!-- Precheck success -->
+
+        <log text="Precheck succeeded"/>
+
+        <set_variable name="precheck_state" value="0"/>
+
+        <set_variable name="credits_state" value="1"/>
+        <set_variable name="mission_state" value="1"/>
+        <set_variable name="jump_gate_1_state" value="0"/>
+        <set_variable name="enemy_setup" value="0"/>
+
+        <!-- Populate first sector -->
+        <set_variable name="sector_state" value="3"/>
+        <set_variable name="sector_id" value="1"/>
+    </event>
+    <event>
+        <if_timer_finished name="precheck"/>
+        <if_variable name="precheck_state" comparator="EQUALS" value="2"/>
+        <!-- Precheck failure -->
+
+        <log text="Precheck failed"/>
+
+        <warning_popup_message message="Error: player ship *must* be named Artemis."/>
+
+        <set_variable name="precheck_state" value="0"/>
+    </event>
+    <!-- }}} Precheck state machine -->
+
     <!-- {{{ Sectors -->
 
     <!-- {{{ Sector 1 - starting sector -->
@@ -108,40 +146,6 @@
 
     <!-- }}} Sectors -->
 
-    <!-- {{{ Precheck state machine -->
-    <event>
-        <if_variable name="precheck_state" comparator="EQUALS" value="1"/>
-        <set_variable name="precheck_state" value="2"/>
-        <set_timer name="precheck" seconds="1"/>
-    </event>
-    <event>
-        <if_timer_finished name="precheck"/>
-        <if_variable name="precheck_state" comparator="EQUALS" value="2"/>
-        <if_exists name="Artemis"/>
-        <!-- Precheck success -->
-
-        <set_variable name="precheck_state" value="0"/>
-
-        <set_variable name="credits_state" value="1"/>
-        <set_variable name="mission_state" value="1"/>
-        <set_variable name="jump_gate_1_state" value="0"/>
-        <set_variable name="enemy_setup" value="0"/>
-
-        <!-- Populate first sector -->
-        <set_variable name="sector_state" value="3"/>
-        <set_variable name="sector_id" value="1"/>
-    </event>
-    <event>
-        <if_timer_finished name="precheck"/>
-        <if_variable name="precheck_state" comparator="EQUALS" value="2"/>
-        <!-- Precheck failure -->
-
-        <warning_popup_message message="Error: player ship *must* be named Artemis."/>
-
-        <set_variable name="precheck_state" value="0"/>
-    </event>
-    <!-- }}} Precheck state machine -->
-
     <!-- {{{ Credits state machine -->
     <event>
         <if_variable name="credits_state" comparator="EQUALS" value="1"/>
@@ -202,7 +206,9 @@
     <event>
         <!-- Player has arrived in New Lhasa -->
         <if_variable name="mission_state" comparator="EQUALS" value="4"/>
-        <if_variable name="sector_state" comparator="EQUALS" value="2"/>
+        <!-- Player has completed transition to sector 2 -->
+        <if_variable name="sector_id" comparator="EQUALS" value="2"/>
+        <if_variable name="sector_state" comparator="EQUALS" value="0"/>
 
         <set_variable name="mission_state" value="5"/>
         <set_timer name="mission" seconds="8"/>
@@ -368,7 +374,9 @@
 
     <!-- Detect mission failure conditions. -->
     <event>
-        <if_variable name="mission_state" comparator="GREATER_EQUAL" value="5"/>
+        <!-- Player has completed transition to sector 2 -->
+        <if_variable name="sector_id" comparator="EQUALS" value="2"/>
+        <if_variable name="sector_state" comparator="EQUALS" value="0"/>
         <if_not_exists name="Omega Base"/>
 
         <big_message title="Mission outcome: Failure" subtitle1="Omega Base was destroyed."/>
