@@ -753,7 +753,7 @@ type_property = (
     # for that combination of values.
     | "eliteAbilityBits"
     | "eliteAbilityState"
-    | "surrenderChance (0-100)"
+    | "surrenderChance"
 
     # Values for neutrals:
     | "exitPointX"
@@ -773,8 +773,6 @@ type_property = (
 
     # TODO: This value has been seen in MISS_TheWaningDark, assuming it's for neutrals:
     | "willAcceptCommsOrders"
-    # TODO: This value seen in MISS_Sandbox, assuming it's for enemies:
-    | "surrenderChance"
 )
 
 ## From mission-file-docs.txt:
